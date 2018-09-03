@@ -3,17 +3,30 @@ from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
+from datetime import datetime
+
+# 多对多
+Teacher2Class = db.table(
+    'class_teacher_maps',
+    db.Column('class_id',db.Integer,db.ForeignKey('classes.id')),
+    db.Column('teacher_id',db.Integer,db.ForeignKey('teachers.id'))
+)
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
-    id = db.Column(db.Integer, primary_key = True) 
+    id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(30))
     # 是否为班主任
     ismain = db.Column(db.Boolean, default = False)
+    # 任课类型
+    kind = db.Column(db.String(10))
     avatar = db.Column(db.String(100))
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
-    intro = db.Coulumn(db.String(1000))
+    intro = db.Coulumn(db.Text)
+    feeds = db.relationship('Feed',backref='teacher',lazy='dynamic')
+    comments = db.relationship('TComment',backref='teacher',lazy='dynamic')
+    evaluations = db.relationship('TEvaluation',backref='teacher',lazy='dynamic')
 
     @staticmethod
     def generate_confirmation_token(self, expiration=604800):
@@ -32,40 +45,49 @@ class Teacher(db.Model):
         self.confirm = True
         db.session.add(self)
         return True
+
 
 class Class(db.Model):
     __tablename__ = 'classes'
     id = db.Column(db.Integer, primary_key = True)
     classname = db.Column(db.String(30))
     mainteacher = db.relationship('Teacher', lazy='dynamic')
-    # relationship
-    # class.children
+    childs = db.relationship('Child',backref='theclass',lazy='dynamic')
+    feeds = db.relationship('Feed',backref='theclass',lazy='dynamic')
 
-class Teacher2Class(db.Model):
-    __tablename__ = 'teacher2classes'
-    id = db.Column(db.Integer, primary_key = True)
-    theteacher = db.relationship('Teacher', lazy='dynamic')
-    theclass = db.relationship('Class', lazy='dynamic')
+    teachers = db.relationship(
+        'Teacher',
+        seconddary = Teacher2Class,
+        backref = db.backref('classes',lazy='dynamic'),
+        lazy = 'dynamic',
+    )
+
 
 class Child(db.Model):
-    __tablename__ = 'children'
+    __tablename__ = 'childs'
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(30))
-    avatar = db.Column(db.String(100))
     sid = db.Column(db.String(30))
-    theclass = db.relationship('Class', backref='children', lazy='dynamic')
-    # relationship
-    # child.parents
+    class_id = db.Column(db.Integer,db.ForeignKey('classes.id'))
+    parents = db.relationship('Parent',backref='childs',lazy='dynamic')
+    pevaluations = db.relationship('PEvaluation',backref='child',lazy='dynamic')
+    tevaluations = db.relationship('TEvaluation',backref='child',lazy='dynamic')
+
+
 
 class Parent(db.Model):
     __tablename__ = 'parents'
-    id = db.Column(db.Integer, primary_key = True) 
+    id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(30))
     avatar = db.Column(db.String(100))
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
-    intro = db.Coulumn(db.String(1000))
-    child = db.relationship('Child', backref='parents', lazy='dynamic')
+    intro = db.Coulumn(db.Text)
+    replation = db.Column(db.String(20))
+    child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
+    comments = db.relationship('PComment',backref='parent',lazy='dynamic')
+    evaluations = db.relationship('PEvaluation',backref='parent',lazy='dynamic')
+
 
     @staticmethod
     def generate_confirmation_token(self, expiration=604800):
@@ -85,49 +107,76 @@ class Parent(db.Model):
         db.session.add(self)
         return True
 
-# read or not store in redis
 class Feed(db.Model):
     __tablename__ = 'feeds'
     id = db.Column(db.Integer, primary_key = True)
-    time = db.Column(db.DateTime)
-    theclass = db.relationship('Class', lazy='dynamic')
-    teacher = db.relationship('Teacher', lazy='dynamic')
+    time = db.Column(db.DateTime,default=datetime.now)
+    class_id = db.Column(db.Integer,db.ForeignKey('classes.id'))
+    teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
     thetype = db.Column(db.String(20))
-    content = db.Column(db.String(2000))
+    content = db.Column(db.Text)
     likes = db.Column(db.Integer)
+    pcomments = db.relationship('Pcomment',backref='feeds',lazy='dynamic')
+    tcomments = db.relationship('Tcomment',backref='feeds',lazy='dynamic')
 
-class Comment(db.Model):
-    __tablename__ = 'Comments'
-    id = db.Column(db.Integer, primary_key = True)
-    time = db.Column(db.DateTime)
-    feed = db.relationship('Feed', backref='comments', lazy='dynamic')
-    content = db.Column(db.String(1000))
-    likes = db.Column(db.Integer)
 
-class Evaluation(db.Model):
-    __tablename__ = 'evaluations'
+# 家长评论
+class PComment(db.Model):
+    __tablename__ = 'pcomments'
     id = db.Column(db.Integer, primary_key = True)
-    content = db.Column(db.String(2000))
+    time = db.Column(db.DateTime,default=datetime.now)
+    content = db.Column(db.Text)
+    likes = db.Column(db.Integer,default=0)
+    feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
+    parent_id = db.Column(db.Integerm,db.ForeignKey('parents.id'))
+
+
+# 老师评论
+class TComment(db.Model):
+    __tablename__ = 'tcomments'
+    id = db.Column(db.Integer, primary_key = True)
+    time = db.Column(db.DateTime,default=datetime.now)
+    content = db.Column(db.Text)
+    likes = db.Column(db.Integer,default=0)
+    feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
+    teacher_id = db.Column(db.Integerm,db.ForeignKey('teachers.id'))
+
+
+# 家长评价
+class PEvaluation(db.Model):
+    __tablename__ = 'pevaluations'
+    id = db.Column(db.Integer, primary_key = True)
+    content = db.Column(db.Text)
     # datetime.datetime.now()
-    time = db.Column(db.DateTime)
-    # teacher or parent
-    fromtype = db.Column(db.String(20))
-    fromid = db.Column(db.Integer)
-    score1 = db.Column(db.Float)
-    score2 = db.Column(db.Float)
-    score3 = db.Column(db.Float)
-    score4 = db.Column(db.Float)
-    score5 = db.Column(db.Float)
-    score6 = db.Column(db.Float)
-    score7 = db.Column(db.Float)
-    score8 = db.Column(db.Float)
-    score9 = db.Column(db.Float)
-    score10 = db.Column(db.Float)
-    score11 = db.Column(db.Float)
-    score12 = db.Column(db.Float)
-    score13 = db.Column(db.Float)
-    score14 = db.Column(db.Float)
-    score15 = db.Column(db.Float)
-    score16 = db.Column(db.Float)
-    score17 = db.Column(db.Float)
-    score18 = db.Column(db.Float)
+    time = db.Column(db.DateTime,default=datetime.now)
+    parent_id = db.Column(db.Integer,db.ForeignKey('parents.id'))
+    child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
+    scores = db.relationship('PScore',backref='pevaluation',lazy='dynamic')
+
+#老师评价
+ class TEvaluation(db.Model):
+    __tablename__ = 'tevaluations'
+    id = db.Column(db.Integer, primary_key = True)
+    content = db.Column(db.Text)
+    # datetime.datetime.now()
+    time = db.Column(db.DateTime,default=datetime.now)
+    teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
+    child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
+    scores = db.relationship('TScore',backref='tevaluation',lazy='dynamic')
+
+#家长评分
+class PScore(db.Model):
+    __tablename__ = 'pscores'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(10))
+    score = db.Column(db.Float)
+    evaluation_id = db.Column(db.Integer,db.ForeignKey('pevaluations.id'))
+
+#老师评分
+class TScore(db.Model):
+    __tablename__ = 'tscores'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(10))
+    score = db.Column(db.Float)
+    evaluation_id = db.Column(db.Integer,db.ForeignKey('tevaluations.id'))
+
