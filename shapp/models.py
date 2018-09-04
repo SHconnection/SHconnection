@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 from datetime import datetime
+import base64
 
 # 多对多
 Teacher2Class = db.table(
@@ -24,9 +25,23 @@ class Teacher(db.Model):
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
     intro = db.Coulumn(db.Text)
+    password_hash = db.Column(db.String(164)
     feeds = db.relationship('Feed',backref='teacher',lazy='dynamic')
     comments = db.relationship('TComment',backref='teacher',lazy='dynamic')
     evaluations = db.relationship('TEvaluation',backref='teacher',lazy='dynamic')
+
+
+    @property
+    def password(self):
+        raise AttributeError("不能读取密码!")
+
+    @password.setter
+    def password(self,password):
+        password = base64.b64decode(password)
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     @staticmethod
     def generate_confirmation_token(self, expiration=604800):
@@ -84,10 +99,22 @@ class Parent(db.Model):
     wechat = db.Column(db.String(20))
     intro = db.Coulumn(db.Text)
     replation = db.Column(db.String(20))
+    password_hash = db.Column(db.String(164))
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
     comments = db.relationship('PComment',backref='parent',lazy='dynamic')
     evaluations = db.relationship('PEvaluation',backref='parent',lazy='dynamic')
 
+    @property
+    def password(self):
+        raise AttributeError("不能读取密码!")
+
+    @password.setter
+    def password(self,password):
+        password = base64.b64decode(password)
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     @staticmethod
     def generate_confirmation_token(self, expiration=604800):
@@ -106,6 +133,7 @@ class Parent(db.Model):
         self.confirm = True
         db.session.add(self)
         return True
+
 
 class Feed(db.Model):
     __tablename__ = 'feeds'
