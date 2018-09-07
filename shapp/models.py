@@ -43,23 +43,28 @@ class Teacher(db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    @staticmethod
     def generate_confirmation_token(self, expiration=604800):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'confirm': self.id}).decode('utf-8')
+        return s.dumps({'id': self.id}).decode('utf-8')
 
-    def confirm(self, token):
+    @staticmethod
+    def verify_confirmation_token(token):
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token.encode('utf-8'))
         except:
-            return False
+            return None
+        return Teacher.query.get_or_404(data['id'])
 
-        if data.get('confirm') != self.id:
-            return False
-        self.confirm = True
-        db.session.add(self)
-        return True
+    def json_info(self):
+        info = {
+            'tel' : self.tel,
+            'name' : self.name,
+            'wechat' : self.wechat,
+            'intro' : self.intro,
+            'avatar' : self.avatar,
+        }
+        return info
 
 
 class Class(db.Model):
@@ -116,23 +121,29 @@ class Parent(db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    @staticmethod
     def generate_confirmation_token(self, expiration=604800):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'confirm': self.id}).decode('utf-8')
+        return s.dumps({'id': self.id}).decode('utf-8')
 
-    def confirm(self, token):
+    @staticmethod
+    def verify_confirmation_token(token):
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token.encode('utf-8'))
         except:
-            return False
+            return None
+        return Parent.query.get_or_404(data['id'])
 
-        if data.get('confirm') != self.id:
-            return False
-        self.confirm = True
-        db.session.add(self)
-        return True
+    def json_info(self):
+        info = {
+            'tel' : self.tel,
+            'name' : self.name,
+            'wechat' : self.wechat,
+            'intro' : self.intro,
+            'avatar' : self.avatar,
+        }
+        return info
+
 
 
 class Feed(db.Model):
