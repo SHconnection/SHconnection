@@ -3,8 +3,8 @@ import os
 DIALECT = 'mysql'
 DRIVER = 'pymysql'
 USERNAME = os.getenv("USERNAME") or "root"
-PASSWORD = os.getenv("PASSWORD") or "ilovemuxi"
-HOST = os.getenv("DBHOST") or "localhost"
+PASSWORD = os.getenv("PASSWORD") or "muxi304"
+HOST = os.getenv("DBHOST") or "0.0.0.0"
 PORT = os.getenv("DBPORT") or "3306"
 DATABASE = "shconnection"
 
@@ -24,10 +24,10 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = \
         "{}+{}://{}:{}@{}:{}/{}?charset=utf8".format(
             DIALECT,
-            DRIVER, 
-            USERNAME, 
-            PASSWORD, 
-            HOST, 
+            DRIVER,
+            USERNAME,
+            PASSWORD,
+            HOST,
             PORT,
             DATABASE
         )
@@ -37,10 +37,10 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = \
         "{}+{}://{}:{}@{}:{}/{}?charset=utf8".format(
             DIALECT,
-            DRIVER, 
-            USERNAME, 
-            PASSWORD, 
-            HOST, 
+            DRIVER,
+            USERNAME,
+            PASSWORD,
+            HOST,
             PORT,
             DATABASE
         )
@@ -50,10 +50,10 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = \
         "{}+{}://{}:{}@{}:{}/{}?charset=utf8".format(
             DIALECT,
-            DRIVER, 
-            USERNAME, 
-            PASSWORD, 
-            HOST, 
+            DRIVER,
+            USERNAME,
+            PASSWORD,
+            HOST,
             PORT,
             DATABASE
         )
@@ -63,4 +63,4 @@ config = {
     'testing': TestingConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig
-} 
+}
