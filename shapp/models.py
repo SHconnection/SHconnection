@@ -7,9 +7,9 @@ from datetime import datetime
 import base64
 
 # 多对多
-Teacher2Class = db.table(
+Teacher2Class = db.Table(
     'class_teacher_maps',
-    db.Column('class_id',db.Integer,db.ForeignKey('classes.id')),
+    db.Column('class_id',db.Integer,db.ForeignKey('theclasses.id')),
     db.Column('teacher_id',db.Integer,db.ForeignKey('teachers.id'))
 )
 
@@ -24,8 +24,8 @@ class Teacher(db.Model):
     avatar = db.Column(db.String(100))
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
-    intro = db.Coulumn(db.Text)
-    password_hash = db.Column(db.String(164)
+    intro = db.Column(db.Text)
+    password_hash = db.Column(db.String(164))
     feeds = db.relationship('Feed',backref='teacher',lazy='dynamic')
     comments = db.relationship('TComment',backref='teacher',lazy='dynamic')
     evaluations = db.relationship('TEvaluation',backref='teacher',lazy='dynamic')
@@ -37,7 +37,7 @@ class Teacher(db.Model):
 
     @password.setter
     def password(self,password):
-        password = base64.b64decode(password)
+        password = password
         self.password_hash = generate_password_hash(password)
 
     def verify_password(self, password):
@@ -54,7 +54,7 @@ class Teacher(db.Model):
             data = s.loads(token.encode('utf-8'))
         except:
             return None
-        return Teacher.query.get_or_404(data['id'])
+        return Teacher.query.get(data['id'])
 
     def json_info(self):
         info = {
@@ -66,19 +66,28 @@ class Teacher(db.Model):
         }
         return info
 
+    def brief_info(self):
+        info = {
+            'tel': self.tel,
+            'name' : self.name,
+            'avatar' : self.avatar,
+        }
+        return info
 
-class Class(db.Model):
-    __tablename__ = 'classes'
+
+
+class Theclass(db.Model):
+    __tablename__ = 'theclasses'
     id = db.Column(db.Integer, primary_key = True)
     classname = db.Column(db.String(30))
-    mainteacher = db.relationship('Teacher', lazy='dynamic')
+    mainteacher_id = db.Column(db.Integer)
     childs = db.relationship('Child',backref='theclass',lazy='dynamic')
     feeds = db.relationship('Feed',backref='theclass',lazy='dynamic')
 
     teachers = db.relationship(
         'Teacher',
-        seconddary = Teacher2Class,
-        backref = db.backref('classes',lazy='dynamic'),
+        secondary = Teacher2Class,
+        backref = db.backref('theclasses',lazy='dynamic'),
         lazy = 'dynamic',
     )
 
@@ -88,8 +97,8 @@ class Child(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(30))
     sid = db.Column(db.String(30))
-    class_id = db.Column(db.Integer,db.ForeignKey('classes.id'))
-    parents = db.relationship('Parent',backref='childs',lazy='dynamic')
+    class_id = db.Column(db.Integer,db.ForeignKey('theclasses.id'))
+    parents = db.relationship('Parent',backref='child',lazy='dynamic')
     pevaluations = db.relationship('PEvaluation',backref='child',lazy='dynamic')
     tevaluations = db.relationship('TEvaluation',backref='child',lazy='dynamic')
 
@@ -102,8 +111,8 @@ class Parent(db.Model):
     avatar = db.Column(db.String(100))
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
-    intro = db.Coulumn(db.Text)
-    replation = db.Column(db.String(20))
+    intro = db.Column(db.Text)
+    relation = db.Column(db.String(20))
     password_hash = db.Column(db.String(164))
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
     comments = db.relationship('PComment',backref='parent',lazy='dynamic')
@@ -115,7 +124,7 @@ class Parent(db.Model):
 
     @password.setter
     def password(self,password):
-        password = base64.b64decode(password)
+        password = password
         self.password_hash = generate_password_hash(password)
 
     def verify_password(self, password):
@@ -132,7 +141,7 @@ class Parent(db.Model):
             data = s.loads(token.encode('utf-8'))
         except:
             return None
-        return Parent.query.get_or_404(data['id'])
+        return Parent.query.get(data['id'])
 
     def json_info(self):
         info = {
@@ -140,6 +149,15 @@ class Parent(db.Model):
             'name' : self.name,
             'wechat' : self.wechat,
             'intro' : self.intro,
+            'avatar' : self.avatar,
+            'relation' : self.relation,
+        }
+        return info
+
+    def brief_info(self):
+        info = {
+            'tel': self.tel,
+            'name' : self.name,
             'avatar' : self.avatar,
         }
         return info
@@ -150,13 +168,13 @@ class Feed(db.Model):
     __tablename__ = 'feeds'
     id = db.Column(db.Integer, primary_key = True)
     time = db.Column(db.DateTime,default=datetime.now)
-    class_id = db.Column(db.Integer,db.ForeignKey('classes.id'))
+    class_id = db.Column(db.Integer,db.ForeignKey('theclasses.id'))
     teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
     thetype = db.Column(db.String(20))
     content = db.Column(db.Text)
     likes = db.Column(db.Integer)
-    pcomments = db.relationship('Pcomment',backref='feeds',lazy='dynamic')
-    tcomments = db.relationship('Tcomment',backref='feeds',lazy='dynamic')
+    pcomments = db.relationship('PComment',backref='feeds',lazy='dynamic')
+    tcomments = db.relationship('TComment',backref='feeds',lazy='dynamic')
 
 
 # 家长评论
@@ -167,7 +185,7 @@ class PComment(db.Model):
     content = db.Column(db.Text)
     likes = db.Column(db.Integer,default=0)
     feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
-    parent_id = db.Column(db.Integerm,db.ForeignKey('parents.id'))
+    parent_id = db.Column(db.Integer,db.ForeignKey('parents.id'))
 
 
 # 老师评论
@@ -178,7 +196,7 @@ class TComment(db.Model):
     content = db.Column(db.Text)
     likes = db.Column(db.Integer,default=0)
     feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
-    teacher_id = db.Column(db.Integerm,db.ForeignKey('teachers.id'))
+    teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
 
 
 # 家长评价
@@ -192,8 +210,15 @@ class PEvaluation(db.Model):
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
     scores = db.relationship('PScore',backref='pevaluation',lazy='dynamic')
 
+    def to_json(self):
+        data = {}
+        data['content'] = self.content
+        data['time'] = self.time
+        data['scores'] = [ s.to_json() for s in self.scores ]
+        return data
+
 #老师评价
- class TEvaluation(db.Model):
+class TEvaluation(db.Model):
     __tablename__ = 'tevaluations'
     id = db.Column(db.Integer, primary_key = True)
     content = db.Column(db.Text)
@@ -203,6 +228,13 @@ class PEvaluation(db.Model):
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
     scores = db.relationship('TScore',backref='tevaluation',lazy='dynamic')
 
+    def to_json(self):
+        data = {}
+        data['content'] = self.content
+        data['time'] = self.time
+        data['scores'] = [ s.to_json() for s in self.scores ]
+        return data
+
 #家长评分
 class PScore(db.Model):
     __tablename__ = 'pscores'
@@ -211,6 +243,13 @@ class PScore(db.Model):
     score = db.Column(db.Float)
     evaluation_id = db.Column(db.Integer,db.ForeignKey('pevaluations.id'))
 
+    def to_json(self):
+        data = {}
+        data['name'] = self.name
+        data['score'] = self.score
+        return data
+
+
 #老师评分
 class TScore(db.Model):
     __tablename__ = 'tscores'
@@ -218,4 +257,10 @@ class TScore(db.Model):
     name = db.Column(db.String(10))
     score = db.Column(db.Float)
     evaluation_id = db.Column(db.Integer,db.ForeignKey('tevaluations.id'))
+
+    def to_json(self):
+        data = {}
+        data['name'] = self.name
+        data['score'] = self.score
+        return data
 
