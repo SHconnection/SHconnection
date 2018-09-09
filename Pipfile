@@ -6,10 +6,8 @@ name = "pypi"
 [packages]
 flask = "*"
 flask-script = "*"
-flask-migrate = "*"
-pymysql = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

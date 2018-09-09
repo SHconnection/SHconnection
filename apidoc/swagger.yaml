@@ -96,6 +96,8 @@ paths:
         403:
           description: "号码重复不能注册"
           
+
+
   /teacher/info/:
     get:
       tags:
@@ -147,10 +149,10 @@ paths:
         required: true
         type: "string"
       - in: "query"
-        name: "page" 
+        name: "page"
         description: "分页页数"
         type: "integer"
-        required: true 
+        required: true
       - in: "header"
         name: "token"
         description: "token"
@@ -180,10 +182,10 @@ paths:
         required: true
         type: "string"
       - in: "query"
-        name: "page" 
+        name: "page"
         description: "分页页数"
         type: "integer"
-        required: true 
+        required: true
       - in: "header"
         name: "token"
         description: "token"
@@ -309,7 +311,7 @@ paths:
         description: "资料信息"
         required: true
         schema:
-          $ref: "#/definitions/Profile"
+          $ref: "#/definitions/ParentProfile"
       - in: "header"
         name: "token"
         description: "token"
@@ -320,7 +322,33 @@ paths:
           description: "修改成功"
         403:
           description: "token过期或验证错误"
-          
+
+
+  /parent/signup/:
+    post:
+      tags:
+      - "parent"
+      summary: "家长注册"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "注册信息"
+        required: true
+        schema:
+          $ref: '#/definitions/ParentSignup'
+      responses:
+        200:
+          description: "注册成功"
+          schema:
+            $ref: '#/definitions/ParentId'
+        403:
+          description: "号码重复不能注册"
+
+
   /parent/info/:
     get:
       tags:
@@ -345,7 +373,7 @@ paths:
         200:
           description: "获取成功"
           schema:
-            $ref: '#/definitions/Profile'
+            $ref: '#/definitions/ParentProfile'
         403:
           description: "token验证错误或过期"
 
@@ -396,7 +424,7 @@ paths:
         required: true
         type: "string"
       - in: "query"
-        name: "cid" 
+        name: "cid"
         description: "班级id"
         type: "string"
       responses:
@@ -420,6 +448,11 @@ paths:
       produces:
       - "application/json"
       parameters:
+      - in: "query"
+        name: "cid"
+        description: "班级ID"
+        required: true
+        type: "string"
       - in: "body"
         name: "body"
         description: "孩子信息列表"
@@ -713,15 +746,12 @@ definitions:
     type: "object"
     required :
     - "content"
-    - "typeid"
-    - "fromname"
-    - "toname"
     - "score"
-    - "time" 
+    - "time"
     properties:
-      time: 
+      time:
         type: "string"
-        description: "评论时间" 
+        description: "评论时间"
       score:
         type: "array"
         xml:
@@ -732,15 +762,7 @@ definitions:
       content:
         type: "string"
         description: "评价"
-      fromname:
-        description: "评价者"
-        type: "string"
-      toname:
-        type: "string"
-        description: "被评价者"
-      typeid:
-        type: "integer"
-        description: "评价类型"
+
 
   Evaluation:
     type: "object"
@@ -760,11 +782,14 @@ definitions:
     required:
     - "tel"
     - "password"
+    - "cid"
     properties:
       tel:
         type: "string"
       password:
         type: "string"
+      cid:
+        type: "integer"
 
   Token:
     type: "object"
@@ -794,19 +819,38 @@ definitions:
       avatar:
         type: "string"
 
-  Createclass:
+
+  ParentProfile:
     type: "object"
     required:
     - "name"
     - "tel"
-    - "classname" 
+    - "wechat"
+    - "intro"
+    - "avatar"
+    - "relation"
     properties:
       tel:
         type: "string"
       name:
         type: "string"
+      wechat:
+        type: "string"
+      intro:
+        type: "string"
+      avatar:
+        type: "string"
+      relation:
+        type: "string"
+
+
+  Createclass:
+    type: "object"
+    required:
+    - "classname"
+    properties:
       classname:
-        type: "string" 
+        type: "string"
 
   ClassId:
     type: "object"
@@ -842,6 +886,14 @@ definitions:
       tid:
         type: "string"
 
+  ParentId:
+    type: "object"
+    required:
+    - 'pid'
+    properties:
+      pid:
+        type: "string"
+
 
   Comment:
     type: "object"
@@ -873,12 +925,12 @@ definitions:
         type: "string"
       avatar:
         type: "string"
-        
+
   ProfileBriefs:
     type: "object"
-    required: 
+    required:
     - "teacher"
-    - "parent" 
+    - "parent"
     properties:
       teacher:
         type: "array"
@@ -894,23 +946,23 @@ definitions:
           wrapped: true
         items:
           $ref: "#/definitions/ProfileBrief"
-      
-      
+
+
   child:
-    type: "object" 
+    type: "object"
     required:
       - "name"
-      - "sid" 
-    properties: 
+      - "sid"
+    properties:
       name:
-        type: "string" 
-      sid: 
-        type: "string" 
+        type: "string"
+      sid:
+        type: "string"
         description: "学号"
-        
+
   classchild:
     type: "object"
-    required: 
+    required:
       - "childs"
     properties:
       childs:
@@ -920,4 +972,22 @@ definitions:
           wrapped: true
         items:
           $ref: "#/definitions/child"
-        
+
+
+  ParentSignup:
+    type: "object"
+    required:
+    - "name"
+    - "password"
+    - "tel"
+    - "childid"
+    properties:
+      tel:
+        type: "string"
+      password:
+        type: "string"
+      name:
+        type: "string"
+      childid:
+        type: "integer"
+        description: "孩子的ID"
