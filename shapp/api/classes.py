@@ -35,7 +35,7 @@ def main_teacher_load_children():
     :return:
     """
     cid = request.args.get("cid")
-    json_data = request.get_json().get("childs")
+    json_data = request.get_json().get("children")
     t = g.current_user
 
     theclass = Theclass.query.filter_by(id=cid).first()

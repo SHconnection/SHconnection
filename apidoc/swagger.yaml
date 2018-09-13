@@ -963,12 +963,12 @@ definitions:
   classchild:
     type: "object"
     required:
-      - "childs"
+      - "children"
     properties:
-      childs:
+      children:
         type: "array"
         xml:
-          name: "childs"
+          name: "children"
           wrapped: true
         items:
           $ref: "#/definitions/child"
