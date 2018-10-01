@@ -45,7 +45,7 @@ class Teacher(db.Model):
 
     def generate_confirmation_token(self, expiration=604800):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'id': self.id}).decode('utf-8')
+        return s.dumps({'usertype':'teacher', 'id': self.id}).decode('utf-8')
 
     @staticmethod
     def verify_confirmation_token(token):
@@ -68,7 +68,7 @@ class Teacher(db.Model):
 
     def brief_info(self):
         info = {
-            'tel': self.tel,
+            'id': self.id,
             'name' : self.name,
             'avatar' : self.avatar,
         }
@@ -117,6 +117,7 @@ class Parent(db.Model):
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
     comments = db.relationship('PComment',backref='parent',lazy='dynamic')
     evaluations = db.relationship('PEvaluation',backref='parent',lazy='dynamic')
+    class_id = db.Column(db.Integer)
 
     @property
     def password(self):
@@ -132,7 +133,7 @@ class Parent(db.Model):
 
     def generate_confirmation_token(self, expiration=604800):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'id': self.id}).decode('utf-8')
+        return s.dumps({'usertype':'parent', 'id': self.id}).decode('utf-8')
 
     @staticmethod
     def verify_confirmation_token(token):
@@ -163,7 +164,6 @@ class Parent(db.Model):
         return info
 
 
-
 class Feed(db.Model):
     __tablename__ = 'feeds'
     id = db.Column(db.Integer, primary_key = True)
@@ -175,8 +175,73 @@ class Feed(db.Model):
     likes = db.Column(db.Integer)
     pcomments = db.relationship('PComment',backref='feeds',lazy='dynamic')
     tcomments = db.relationship('TComment',backref='feeds',lazy='dynamic')
+    
+    # 以下使用str() 与 eval(), 不使用redis 
+    pictures = db.Column(db.Text)
+    readed = db.Column(db.Text)
+    readnum = db.Column(db.Integer, default=0)
+    unreaded = db.Column(db.Text)
+    liked = db.Column(db.Text)
+    
+    def picskey(self):
+        return "feed" + str(self.id)
+
+    def feedret(self):
+        teacher = Teacher.query.filter(id=teacher_id).first()
+        return {
+            "id": id,
+            "class_id": class_id,
+            "type": thetype,
+            "content": content,
+            "likes": likes,
+            "liked": False,
+            "picture_urls": eval(pictures),
+            "teacherSimpleInfo": teacher.brief_info()
+        }
 
 
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key = True)
+    ctype = db.Column(db.String(50))
+    time = db.Column(db.DateTime,default=datetime.now)
+    content = db.Column(db.Text)
+    likes = db.Column(db.Integer,default=0)
+    feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
+    uid = db.Column(db.Integer)
+    
+    def add_user_info(self):
+        if self.ctype == "teacher":
+            user = Teacher.query.filter_by(id = uid).first() or None
+        elif ctype == "parent":
+            user = Parent.query.filter_by(id = uid).first() or None
+        else:
+            user = None
+
+        if not user:
+            user = {
+                "utype": self.ctype,
+                "uid": 0,
+                "uname": "没找到此用户",
+                "avater": "placeholder"
+            }
+        else:
+           user = {
+                "utype": self.ctype,
+                "uid": self.uid,
+                "uname": user.name,
+                "avatar": user.avatar
+            }
+
+        return {
+                    "id": self.id,
+                    "feedId": self.feed_id,
+                    "content": self.content,
+                    "like": self.likes,
+                    "user_simple_info": user
+                }
+        
+"""
 # 家长评论
 class PComment(db.Model):
     __tablename__ = 'pcomments'
@@ -197,7 +262,7 @@ class TComment(db.Model):
     likes = db.Column(db.Integer,default=0)
     feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
     teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
-
+"""
 
 # 家长评价
 class PEvaluation(db.Model):

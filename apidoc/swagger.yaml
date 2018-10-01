@@ -551,6 +551,32 @@ paths:
         200:
           description: ok
 
+  /feed/{feedid}/like/:
+    post:
+      tags:
+      - feed
+      summary: like某个feed
+      parameters:
+      - in: path
+        name: feedid
+        type: integer
+        description: feed id
+        required: true
+      - in: body
+        name: postbody
+        schema:
+          type: object
+          properties:
+            pid:
+              type: integer
+              description: parent id
+
+      responses:
+        200:
+          description: ok
+        403:
+          description: forbidden already liked
+
   /feed/:
     post:
       tags:
@@ -614,12 +640,6 @@ paths:
           schema:
             type: object
             properties:
-              pagenum:
-                type: integer
-                description: 页数
-              num:
-                type: integer
-                description: 获取了多少Comment
               comments:
                 type: object
                 $ref: '#/definitions/FeedComments'
@@ -641,6 +661,11 @@ definitions:
       content:
         type: string
         description: 内容
+      picture_urls:
+        type: array
+        items:
+          type: string
+          description: 图片URL
 
   Feed:
     type: object
@@ -666,6 +691,12 @@ definitions:
       liked:
         type: boolean
         description: 是否已喜欢
+      picture_urls:
+        type: array
+        items:
+          type: string
+          description: 图片URL
+
 
   Feeds:
     type: array
@@ -709,6 +740,23 @@ definitions:
       content:
         type: string
 
+  UserSimpleInfo:
+    type: object
+    properties:
+      utype: 
+        type: string
+        description: 用户类型
+      uid: 
+        type: integer
+        description: 用户id
+      uname:
+        type: string
+        description: 用户名
+      avater:
+        type: string
+        description: 头像地址
+      
+
   FeedComment:
     type: object
     properties:
@@ -721,6 +769,12 @@ definitions:
       like:
         type: integer
         description: 喜欢的人数
+      user_simple_info:
+        type: object
+        $ref: '#/definitions/UserSimpleInfo'
+  
+
+          
 
   FeedComments:
     type: array
@@ -991,3 +1045,5 @@ definitions:
       childid:
         type: "integer"
         description: "孩子的ID"
+
+

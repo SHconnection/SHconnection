@@ -86,7 +86,7 @@ def parent_signup():
     password = request.get_json().get('password')
     name = request.get_json().get('name')
     childid = request.get_json().get('childid')
-
+    
     if tel is None or password is None or name is None or childid is None:
         return jsonify({ 'msg' : '注册信息不全'}), 403
 
@@ -97,12 +97,15 @@ def parent_signup():
     c = Child.query.filter_by(id=childid).first()
     if c is None:
         return jsonify({ 'msg' : '孩子不存在！'}), 403
+    else:
+        class_id = c.class_id
 
     p = Parent(
         name=name,
         password=password,
         child_id=childid,
         tel=tel,
+        class_id = class_id,
     )
 
     db.session.add(p)
