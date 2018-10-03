@@ -19,8 +19,10 @@ class Teacher(db.Model):
     name = db.Column(db.String(30))
     # 是否为班主任
     ismain = db.Column(db.Boolean, default = False)
-    # 任课类型
+    # 任课类型，它是任课类型
     kind = db.Column(db.String(10))
+    # 工号
+    wid = db.Column(db.String(20))
     avatar = db.Column(db.String(100))
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
@@ -107,6 +109,8 @@ class Child(db.Model):
 class Parent(db.Model):
     __tablename__ = 'parents'
     id = db.Column(db.Integer, primary_key = True)
+    # 孩子的学号
+    sid = db.Column(db.String(20))
     name = db.Column(db.String(30))
     avatar = db.Column(db.String(100))
     tel = db.Column(db.String(20))
