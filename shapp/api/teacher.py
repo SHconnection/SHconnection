@@ -81,6 +81,7 @@ def edit_teacher_profile():
     wechat = request.get_json().get('wechat')
     intro = request.get_json().get('intro')
     avatar = request.get_json().get('avatar')
+    kind = request.get_json().get('subject')
 
     tmp = Teacher.query.filter_by(tel=tel).first()
     if tmp is not None and tmp is not t:
@@ -91,6 +92,7 @@ def edit_teacher_profile():
     t.wechat = wechat
     t.intro = intro
     t.avatar = avatar
+    t.kind = kind
 
     db.session.add(t)
     db.session.commit()
@@ -140,3 +142,84 @@ def mainteacher_signup():
     db.session.commit()
 
     return jsonify({ 'create' : t.id }), 200
+
+
+# 老师登录
+@api.route('/teacher/signin/',methods=['POST'])
+def teacher_signin():
+    wid = request.get_json().get('wid')
+    password = request.get_json().get('password')
+
+    t = Teacher.query.filter_by(wid=wid).first()
+    if t is None:
+        return jsonify({'msg': '工号未注册!'}), 401
+
+    if not t.verify_password(password):
+        return jsonify({'msg': '密码错误!'}), 401
+
+    token = t.generate_confirmation_token()
+    class_id = [ each.id for each in t.theclasses ]
+
+    return jsonify({
+        'token' : token,
+        'classes_id' : class_id,
+    }), 200
+
+
+
+@api.route('/teacher/init/addclass/<int:classid>/',methods=['POST'])
+def teacher_addclass(classid):
+    """
+    老师注册并加入班级
+    :param classid:
+    :return:
+    """
+    wid = request.get_json().get('wid')
+    password = request.get_json().get('password')
+    name = request.get_json().get('name')
+    kind = request.get_json().get('subject')
+
+    theclass = Theclass.query.filter_by(id=classid).first()
+    if theclass is None:
+        return jsonify({ 'msg': '班级不存在!'}), 404
+
+    teacher = Teacher.query.filter_by(wid=wid).first()
+    if teacher is None:
+        return jsonify({ 'msg': '老师工号不存在!'}), 404
+
+    if theclass not in teacher.theclasses:
+        return jsonify({ 'msg': '老师不在该班级!'}), 403
+
+    teacher.password = password
+    teacher.name = name
+    teacher.kind = kind
+
+    db.session.add(teacher)
+    db.session.commit()
+
+    return jsonify({ 'msg' : '注册成功!'}), 200
+
+
+@api.route('/teacher/addclass/<int:classid>/',methods=['GET'])
+@teacher_login_required
+def teacher_add_class(classid):
+    """
+    老师加入班级
+    :param classid:
+    :return:
+    """
+    t = g.current_user
+
+    theclass = Theclass.query.filter_by(id=classid).first()
+    if theclass is None:
+        return jsonify({'msg': '班级不存在!'}), 404
+
+    if t in theclass.teachers:
+        return jsonify({'msg': '老师已经在班级!'}),404
+
+    theclass.teachers.append(t)
+    db.session.add(theclass)
+    db.session.commit()
+
+    return jsonify({'msg' : '加入成功!'}), 200
+
