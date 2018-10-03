@@ -1,12 +1,14 @@
 from flask import jsonify, request, g
 from . import api
-from ..models import Teacher, Parent, Feed
+from ..models import Teacher, Parent, Feed, Comment
 from .. import db
 from .decorators import parent_login_required, login_required, teacher_login_required
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask import current_app
+
 
 @api.route('/feed/',methods=['POST'])
-@teacher_login_required
+#@teacher_login_required
 def teacher_send_feed():
     """
     老师发送feed流 　
@@ -43,7 +45,7 @@ def teacher_send_feed():
     return jsonify({'created':feed.id}), 201
 
 @api.route('/feeds/<int:pagenum>/')
-@login_required
+#@login_required
 def getfeeds(pagenum):
     pageSize = 10
     rows = db.session.query(Feed).filter(Record == Value).count()
@@ -64,7 +66,7 @@ def getfeeds(pagenum):
 
 
 @api.route('/feed/<int:feedid>/')
-@login_required
+#@login_required
 def get_a_feed(feedid):
     feed = Feed.query.filter_by(id=feedid).first() or None
     if feed:
@@ -117,15 +119,15 @@ def get_a_feed(feedid):
 
 
 @api.route('/feed/<int:feedid>/read/')
-@parent_login_required
+#@parent_login_required
 def readfeed(feedid):
     pid = request.get_json().get("pid")
     thefeed = Feed.query.filter_by(id=feedid).first()
     if thefeed is None:
         return jsonify({"msg": "notfound"}), 404
     else:
-        readedlist = eval(feed.readed)
-        unreadedlist = eval(feed.unreaded)
+        readedlist = eval(thefeed.readed)
+        unreadedlist = eval(thefeed.unreaded)
         readedlist.append(int(pid))
         unreadedlist.remove(int(pid))
         
@@ -138,7 +140,7 @@ def readfeed(feedid):
         return jsonify({"msg": "ok"}), 200
 
 @api.route('/feed/<int:feedid>/like/')
-@login_required
+#@login_required
 def likefeed(feedid):
 
     token = request.headers['Token'].encode('utf-8')
@@ -173,69 +175,31 @@ def makecomment(feedid):
         data = s.loads(token)
         uid = data['id']
         utype = data['usertype']
-        utypeid = utype + str(uid)
     except:
         return jsonify({"msg": "auth error"}), 401
 
     feedid = request.get_json().get("feedId")
     content = request.get_json().get("content")
-    
-    c = Comment()
-    if utype == "teacher" or utype == "parent":
-        c.ctype = utype
-    else:
-        return jsonify({"msg": "post_user_type error"}), 400
-    
-    c.content, c.feed_id, c.uid =  content, feedid, uid
+
+    try:
+        c = Comment.makecomment(utype, uid, feedid, content)
+    except:
+        return jsonify({"msg": "info error"}), 400
     db.session.add(c)
     db.session.commit(c)
-
-    return jsonify({"msg": post_user_type + " comment for feed " + str(feedid) + "posted."}), 201
+    return jsonify({"msg": utype + " comment for feed " + str(feedid) + "posted."}), 201
 
 @api.route('/feed/{int:feedid}/comments/')
 def getcomments(feedid):
-    feed = Feed.query.filter_by(id = feedid).first() or None
+    feed = Feed.query.filter_by(id=feedid).first() or None
     if feed:
-        comments = Comment.query.filter_by(feed_id = feedid).all()
+        comments = Comment.query.filter_by(feed_id=feedid).all()
         for c in comments:
             c = c.add_user_info()
-        
         return jsonify({
                 "comments": comments
             })
-
     else:
         return jsonify({"msg": "feed not found"}), 404
-
-
-"""
-
-@api.route("/feed/<int:feedid>/comment/<int:commentid>/like/")
-@login_required
-def likecomment(feedid, commentid):
-    token = request.headers['Token'].encode('utf-8')
-    s = Serializer(current_app.config['SECRET_KEY'])
-    try:
-        data = s.loads(token)
-        uid = data['id']
-        utype = data['usertype']
-        utypeid = utype + str(uid)
-    except:
-        return jsonify({"msg": "auth error"}), 401
-    
-    feed = Feed.query.filter_by(id = feedid).first()
-    comment = Comment.query.filter_by(id = commentid).first()
-    if feed is None or comment is None:
-        return jsonify({"msg": "source not found"}), 404
-    else:
-        comment = Comment.query.filter_by(id = commentid).first()
-        
-"""
-    
-
-
-
-
-
 
 
