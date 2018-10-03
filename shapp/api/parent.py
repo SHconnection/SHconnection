@@ -1,32 +1,56 @@
 from flask import jsonify, request, g
 from . import api
-from ..models import Parent, Child
+from ..models import Parent, Child, Theclass
 from .. import db
 from .decorators import parent_login_required, login_required
 
 
-@api.route('/parent/login/',methods=['POST'])
-def parent_login():
-    """
-    家长登录
-    :return:
-    """
-    tel = request.get_json().get('tel')
-    password = request.get_json().get('password')
+@api.route('/parent/addclass/<int:classid>/', methods=['POST'])
+def parentinit(classid):
+    cls = Theclass.query.filter_by(id=classid).first() or None
+    if not cls:
+        return jsonify({"msg": "class not fonund"}), 404
 
-    if tel is None or password is None:
-        return jsonify({ 'msg' : '登录信息不全! '}) , 401
+    sid = request.get_json().get("sid")
+    password = request.get_json().get("password")
+    if sid is None or password is None:
+        return jsonify({"msg": "need sid, password"}), 400
 
-    p = Parent.query.filter_by(tel=tel).first()
-    if p is None:
-        return jsonify({ 'msg' : '电话未注册!' }), 401
+    p = Parent.query.filter_by(sid=sid).first() or None
+    if p:
+       return jsonify({"msg": "parent already signed up"}), 400
+
+    # 查找孩子是否存在
+    child = Child.query.filter_by(sid=sid).first() or None
+    if not child:
+        return jsonify({"msg": "child not found"}), 404
+
+
+    p = Parent(
+        sid = sid,
+        name = child.name + "'s parent",
+        password=password,
+        child_id=child.id,
+        class_id=cls.id
+    )
+    db.session.add(p)
+    db.session.commit()
+
+    return jsonify({'pid': p.id}), 200
+
+
+@api.route("/parent/signin/", methods=["POST"])
+def parent_signin():
+    sid = request.get_json().get("sid")
+    password = request.get_json().get("password")
+    p = Parent.query.filter_by(sid=sid).first() or None
+    if not p:
+        return jsonify({"msg": "not found"}), 404
 
     if not p.verify_password(password):
-        return jsonify({ 'msg' : '密码错误!'}), 401
-
+        return jsonify({'msg': 'password wrong'}), 400
     token = p.generate_confirmation_token()
     return jsonify({ 'token' : token }), 200
-
 
 @api.route('/parent/profile/',methods=['POST'])
 @parent_login_required
@@ -75,7 +99,7 @@ def get_parent_profile():
 
     return jsonify(p.json_info()), 200
 
-
+# 废弃
 @api.route('/parent/signup/',methods=['POST'])
 def parent_signup():
     """
@@ -112,5 +136,29 @@ def parent_signup():
     db.session.commit()
 
     return jsonify({ 'pid' : p.id }), 200
+
+# 废弃
+@api.route('/parent/login/',methods=['POST'])
+def parent_login():
+    """
+    家长登录
+    :return:
+    """
+    tel = request.get_json().get('tel')
+    password = request.get_json().get('password')
+
+    if tel is None or password is None:
+        return jsonify({ 'msg' : '登录信息不全! '}) , 401
+
+    p = Parent.query.filter_by(tel=tel).first()
+    if p is None:
+        return jsonify({ 'msg' : '电话未注册!' }), 401
+
+    if not p.verify_password(password):
+        return jsonify({ 'msg' : '密码错误!'}), 401
+
+    token = p.generate_confirmation_token()
+    return jsonify({ 'token' : token }), 200
+
 
 
