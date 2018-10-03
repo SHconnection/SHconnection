@@ -113,3 +113,30 @@ def get_teacher_profile():
         return jsonify({ 'msg' :'no such teacher'}), 404
 
     return jsonify(t.json_info()), 200
+
+
+
+@api.route('/mainteacher/signup/',methods=['POST'])
+def mainteacher_signup():
+    """
+    班主任注册
+    :return:
+    """
+    wid = request.get_json().get('wid')
+    password = request.get_json().get('password')
+
+    if Teacher.query.filter_by(wid=wid).first() is not None:
+        return jsonify({ 'msg' : '工号已注册!'}), 401
+    if wid is None or password is None:
+        return jsonify({ 'msg' : '信息不全!'}), 403
+
+    t = Teacher(
+        password = password,
+        ismain = True,
+        wid = wid,
+    )
+
+    db.session.add(t)
+    db.session.commit()
+
+    return jsonify({ 'create' : t.id }), 200

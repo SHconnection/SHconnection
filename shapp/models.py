@@ -29,7 +29,7 @@ class Teacher(db.Model):
     intro = db.Column(db.Text)
     password_hash = db.Column(db.String(164))
     feeds = db.relationship('Feed',backref='teacher',lazy='dynamic')
-    comments = db.relationship('TComment',backref='teacher',lazy='dynamic')
+    #comments = db.relationship('Comment',backref='teacher',lazy='dynamic')
     evaluations = db.relationship('TEvaluation',backref='teacher',lazy='dynamic')
 
 
@@ -82,7 +82,8 @@ class Theclass(db.Model):
     __tablename__ = 'theclasses'
     id = db.Column(db.Integer, primary_key = True)
     classname = db.Column(db.String(30))
-    mainteacher_id = db.Column(db.Integer)
+    # 班主任工号
+    mainteacher_id = db.Column(db.String(20))
     childs = db.relationship('Child',backref='theclass',lazy='dynamic')
     feeds = db.relationship('Feed',backref='theclass',lazy='dynamic')
 
@@ -119,7 +120,7 @@ class Parent(db.Model):
     relation = db.Column(db.String(20))
     password_hash = db.Column(db.String(164))
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
-    comments = db.relationship('PComment',backref='parent',lazy='dynamic')
+    # comments = db.relationship('Comment',backref='parent',lazy='dynamic')
     evaluations = db.relationship('PEvaluation',backref='parent',lazy='dynamic')
     class_id = db.Column(db.Integer)
 
@@ -177,9 +178,10 @@ class Feed(db.Model):
     thetype = db.Column(db.String(20))
     content = db.Column(db.Text)
     likes = db.Column(db.Integer)
-    pcomments = db.relationship('PComment',backref='feeds',lazy='dynamic')
-    tcomments = db.relationship('TComment',backref='feeds',lazy='dynamic')
-    
+    # pcomments = db.relationship('PComment',backref='feeds',lazy='dynamic')
+    # tcomments = db.relationship('TComment',backref='feeds',lazy='dynamic')
+    comments = db.relationship('Comment',backref='feeds',lazy='dynamic')
+
     # 以下使用str() 与 eval(), 不使用redis 
     pictures = db.Column(db.Text)
     readed = db.Column(db.Text)
@@ -207,8 +209,8 @@ class Feed(db.Model):
 class Comment(db.Model):
     __tablename__ = 'comments'
     id = db.Column(db.Integer, primary_key = True)
-    ctype = db.Column(db.String(50))
-    time = db.Column(db.DateTime, default=datetime.now)
+    ctype = db.Column(db.String(10))
+    time = db.Column(db.DateTime,default=datetime.now)
     content = db.Column(db.Text)
     likes = db.Column(db.Integer, default=0)
     feed_id = db.Column(db.Integer, db.ForeignKey("feeds.id"))
