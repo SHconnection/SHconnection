@@ -191,15 +191,15 @@ class Feed(db.Model):
         return "feed" + str(self.id)
 
     def feedret(self):
-        teacher = Teacher.query.filter(id=teacher_id).first()
+        teacher = Teacher.query.filter(id=self.teacher_id).first()
         return {
             "id": id,
-            "class_id": class_id,
-            "type": thetype,
-            "content": content,
-            "likes": likes,
+            "class_id": self.class_id,
+            "type": self.thetype,
+            "content": self.content,
+            "likes": self.likes,
             "liked": False,
-            "picture_urls": eval(pictures),
+            "picture_urls": eval(self.pictures),
             "teacherSimpleInfo": teacher.brief_info()
         }
 
@@ -208,17 +208,38 @@ class Comment(db.Model):
     __tablename__ = 'comments'
     id = db.Column(db.Integer, primary_key = True)
     ctype = db.Column(db.String(50))
-    time = db.Column(db.DateTime,default=datetime.now)
+    time = db.Column(db.DateTime, default=datetime.now)
     content = db.Column(db.Text)
-    likes = db.Column(db.Integer,default=0)
-    feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
+    likes = db.Column(db.Integer, default=0)
+    feed_id = db.Column(db.Integer, db.ForeignKey("feeds.id"))
     uid = db.Column(db.Integer)
-    
+
+    @staticmethod
+    def makecomment(utype, uid, feed_id, content):
+        if utype == "teacher":
+            user = Teacher.query.filter_by(id=uid).first() or None
+        elif utype == "parent":
+            user = Parent.query.filter_by(id=uid).first() or None
+        else:
+            user = None
+
+        if user is None:
+            raise Exception
+        else:
+            c = Comment()
+            c.ctype = utype
+            c.content = content
+            c.feed_id = feed_id
+            c.uid = uid
+
+            return c
+
+
     def add_user_info(self):
         if self.ctype == "teacher":
-            user = Teacher.query.filter_by(id = uid).first() or None
-        elif ctype == "parent":
-            user = Parent.query.filter_by(id = uid).first() or None
+            user = Teacher.query.filter_by(id=self.uid).first() or None
+        elif self.ctype == "parent":
+            user = Parent.query.filter_by(id=self.uid).first() or None
         else:
             user = None
 
@@ -244,29 +265,6 @@ class Comment(db.Model):
                     "like": self.likes,
                     "user_simple_info": user
                 }
-        
-"""
-# 家长评论
-class PComment(db.Model):
-    __tablename__ = 'pcomments'
-    id = db.Column(db.Integer, primary_key = True)
-    time = db.Column(db.DateTime,default=datetime.now)
-    content = db.Column(db.Text)
-    likes = db.Column(db.Integer,default=0)
-    feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
-    parent_id = db.Column(db.Integer,db.ForeignKey('parents.id'))
-
-
-# 老师评论
-class TComment(db.Model):
-    __tablename__ = 'tcomments'
-    id = db.Column(db.Integer, primary_key = True)
-    time = db.Column(db.DateTime,default=datetime.now)
-    content = db.Column(db.Text)
-    likes = db.Column(db.Integer,default=0)
-    feed_id = db.Column(db.Integer,db.ForeignKey("feeds.id"))
-    teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
-"""
 
 # 家长评价
 class PEvaluation(db.Model):
@@ -317,7 +315,6 @@ class PScore(db.Model):
         data['name'] = self.name
         data['score'] = self.score
         return data
-
 
 #老师评分
 class TScore(db.Model):
