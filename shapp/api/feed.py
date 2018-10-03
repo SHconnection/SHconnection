@@ -15,7 +15,7 @@ def teacher_send_feed():
     :return:
     """
 
-    token = request.headers['Token'].encode('utf-8')
+    token = request.headers['token'].encode('utf-8')
     s = Serializer(current_app.config['SECRET_KEY'])
     try:
         data = s.loads(token)
@@ -28,7 +28,7 @@ def teacher_send_feed():
     feed.teacher_id = request.get_json().get("teacherId")
     feed.thetype = request.get_json().get("type")
     feed.content = request.get_json().get("content")
-    feed.picture_urls = str(request.get_json().get("picture_urls"))
+    feed.pictures = str(request.get_json().get("picture_urls"))
     
     # init unread people 
     unreaded = []
@@ -39,6 +39,7 @@ def teacher_send_feed():
     feed.readed = str([])
     feed.liked = str([])
 
+
     db.session.add(feed)
     db.session.commit()
 
@@ -48,14 +49,14 @@ def teacher_send_feed():
 #@login_required
 def getfeeds(pagenum):
     pageSize = 10
-    rows = db.session.query(Feed).filter(Record == Value).count()
+    rows = Feed.query.count()
     pageMax = rows / pageSize
     if rows % pageSize:
         pageMax += 1
     hasnext = True
     if pagenum > pageMax:
         hasnext = False
-    feeds = db.session.query(Feed).limit(pageSize).offset((pagenum-1)*pageSize)
+    feeds = db.session.query(Feed).limit(pageSize).offset((pagenum-1)*pageSize).all()
     feedsret = [feed.feedret() for feed in feeds]
     return jsonify({
         "pagenum": pagenum,
@@ -75,13 +76,13 @@ def get_a_feed(feedid):
             return jsonify({"msg": "teacher not found"}), 404
         
         try:
-            teacher_simple_info = teacher.brief_info        
+            teacher_simple_info = teacher.brief_info()
             readed = eval(feed.readed)
             unreaded = eval(feed.unreaded)
-            
+
             likes_person = eval(feed.liked)
 
-            token = request.headers['Token'].encode('utf-8')
+            token = request.headers['token'].encode('utf-8')
             s = Serializer(current_app.config['SECRET_KEY'])
             try:
                 data = s.loads(token)
@@ -93,10 +94,10 @@ def get_a_feed(feedid):
             else:
                 liked = False
 
-            likenum = len(liked)
+            likenum = len(eval(feed.liked))
             pictures = eval(feed.pictures)
-        except:
-            return jsonify({"msg": "server error"}), 500
+        except Exception as e:
+            return jsonify({"exception msg": repr(e)}), 500
 
         return jsonify({
                 "feedinfo": {
@@ -109,8 +110,8 @@ def get_a_feed(feedid):
                         "picture_urls": pictures,
                         "teacherSimpleInfo": teacher_simple_info
                     },
-                "readed": readed,
-                "unreaded": unreaded
+                # "readed": readed,
+                # "unreaded": unreaded
             })
     else:
         return jsonify({
@@ -118,13 +119,22 @@ def get_a_feed(feedid):
             }), 404
 
 
-@api.route('/feed/<int:feedid>/read/')
+@api.route('/feed/<int:feedid>/read/', methods = ["POST"])
 #@parent_login_required
 def readfeed(feedid):
-    pid = request.get_json().get("pid")
+    token = request.headers['token'].encode('utf-8')
+    s = Serializer(current_app.config['SECRET_KEY'])
+    try:
+        data = s.loads(token)
+        pid = data['id']
+        utype = data['usertype']
+    except:
+        return jsonify({"msg": "auth error"}), 401
+
     thefeed = Feed.query.filter_by(id=feedid).first()
+
     if thefeed is None:
-        return jsonify({"msg": "notfound"}), 404
+        return jsonify({"msg": "not found"}), 404
     else:
         readedlist = eval(thefeed.readed)
         unreadedlist = eval(thefeed.unreaded)
@@ -139,11 +149,11 @@ def readfeed(feedid):
 
         return jsonify({"msg": "ok"}), 200
 
-@api.route('/feed/<int:feedid>/like/')
+@api.route('/feed/<int:feedid>/like/', methods=["POST"])
 #@login_required
 def likefeed(feedid):
 
-    token = request.headers['Token'].encode('utf-8')
+    token = request.headers['token'].encode('utf-8')
     s = Serializer(current_app.config['SECRET_KEY'])
     try:
         data = s.loads(token)
@@ -165,11 +175,12 @@ def likefeed(feedid):
             thefeed.liked = str(likelist)
             thefeed.likes += 1
             db.session.commit()
+            return jsonify({"msg": "ok"}), 200
 
-@api.route('/feed/<int:feedid>/comment/')
+@api.route('/feed/<int:feedid>/comment/',methods=["POST"])
 def makecomment(feedid):
 
-    token = request.headers['Token'].encode('utf-8')
+    token = request.headers['token'].encode('utf-8')
     s = Serializer(current_app.config['SECRET_KEY'])
     try:
         data = s.loads(token)
@@ -186,18 +197,22 @@ def makecomment(feedid):
     except:
         return jsonify({"msg": "info error"}), 400
     db.session.add(c)
-    db.session.commit(c)
+    db.session.commit()
     return jsonify({"msg": utype + " comment for feed " + str(feedid) + "posted."}), 201
 
-@api.route('/feed/{int:feedid}/comments/')
+
+@api.route('/feed/<int:feedid>/comments/', methods=["GET"])
 def getcomments(feedid):
     feed = Feed.query.filter_by(id=feedid).first() or None
     if feed:
         comments = Comment.query.filter_by(feed_id=feedid).all()
+        commentsinfo = []
         for c in comments:
-            c = c.add_user_info()
+            cinfo = c.add_user_info()
+            commentsinfo.append(cinfo)
+
         return jsonify({
-                "comments": comments
+                "comments": commentsinfo
             })
     else:
         return jsonify({"msg": "feed not found"}), 404

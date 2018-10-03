@@ -177,25 +177,25 @@ class Feed(db.Model):
     teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
     thetype = db.Column(db.String(20))
     content = db.Column(db.Text)
-    likes = db.Column(db.Integer)
+    likes = db.Column(db.Integer, default=0)
     # pcomments = db.relationship('PComment',backref='feeds',lazy='dynamic')
     # tcomments = db.relationship('TComment',backref='feeds',lazy='dynamic')
     comments = db.relationship('Comment',backref='feeds',lazy='dynamic')
 
     # 以下使用str() 与 eval(), 不使用redis 
-    pictures = db.Column(db.Text)
-    readed = db.Column(db.Text)
+    pictures = db.Column(db.Text, default="[]")
+    readed = db.Column(db.Text, default="[]")
     readnum = db.Column(db.Integer, default=0)
-    unreaded = db.Column(db.Text)
-    liked = db.Column(db.Text)
+    unreaded = db.Column(db.Text, default="[]")
+    liked = db.Column(db.Text, default="[]")
     
     def picskey(self):
         return "feed" + str(self.id)
 
     def feedret(self):
-        teacher = Teacher.query.filter(id=self.teacher_id).first()
+        teacher = Teacher.query.filter_by(id=self.teacher_id).first()
         return {
-            "id": id,
+            "id": self.id,
             "class_id": self.class_id,
             "type": self.thetype,
             "content": self.content,
