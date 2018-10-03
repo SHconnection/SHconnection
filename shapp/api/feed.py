@@ -1,6 +1,6 @@
 from flask import jsonify, request, g
 from . import api
-from ..models import Teacher, Parent, Feed, PComment, TComment
+from ..models import Teacher, Parent, Feed
 from .. import db
 from .decorators import parent_login_required, login_required, teacher_login_required
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer

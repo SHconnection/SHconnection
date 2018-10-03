@@ -75,3 +75,58 @@ def get_class_info():
     return  jsonify({'teacher' : teachers,
                      'parent': parents
                      }), 200
+
+
+@api.route('/init/class/',methods=['POST'])
+def init_class():
+    """
+    创建班级
+    """
+    class_name = request.get_json().get('class_name')
+    main_teacher_wid = request.get_json().get('main_teacher_wid')
+    children = request.get_json().get('children_list')
+    teachers = request.get_json().get('teachers_list')
+
+    mainteacher = Teacher.query.filter_by(wid=main_teacher_wid).first()
+    theclass = Theclass.query.filter_by(mainteacher_id=main_teacher_wid).first()
+
+    if mainteacher is None:
+        return jsonify({ 'msg' : '班主任不存在!'}), 403
+
+    if theclass is not None:
+        return jsonify({ 'msg' : '已经创建班级，不能再创建!'}), 403
+
+    theclass = Theclass(
+        classname=class_name,
+        mainteacher_id=main_teacher_wid,
+    )
+
+    theclass.teachers.append(mainteacher)
+    db.session.add(theclass)
+    db.session.commit()
+
+    # 班级id
+    cid = theclass.id
+
+    for each in children:
+        child = Child(
+            sid=each['sid'],
+            name=each['name'],
+            class_id=cid
+        )
+        db.session.add(child)
+    db.session.commit()
+
+    for each in teachers:
+        teacher = Teacher(
+            wid=each['wid'],
+            name=each['name'],
+        )
+        db.session.add(teacher)
+        db.session.commit()
+        theclass.teachers.append(teacher)
+
+    db.session.add(theclass)
+    db.session.commit()
+
+    return jsonify({ 'msg' : '导入成功'}), 201
