@@ -45,7 +45,8 @@ class Teacher(db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def generate_confirmation_token(self, expiration=604800):
+    # 8 months
+    def generate_confirmation_token(self, expiration=20736000):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'usertype':'teacher', 'id': self.id}).decode('utf-8')
 
@@ -136,7 +137,7 @@ class Parent(db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def generate_confirmation_token(self, expiration=604800):
+    def generate_confirmation_token(self, expiration=20736000):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'usertype':'parent', 'id': self.id}).decode('utf-8')
 
