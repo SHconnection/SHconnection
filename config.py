@@ -2,8 +2,8 @@ import os
 
 DIALECT = 'mysql'
 DRIVER = 'pymysql'
-USERNAME = os.getenv("USERNAME") or "root"
-PASSWORD = os.getenv("PASSWORD") or "ilovemuxi"
+USERNAME = os.getenv("DBUSERNAME") or "root"
+PASSWORD = os.getenv("DBPASSWORD") or "ilovemuxi"
 HOST = os.getenv("DBHOST") or "localhost"
 PORT = os.getenv("DBPORT") or "3306"
 DATABASE = "shconnection"
