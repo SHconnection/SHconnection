@@ -129,4 +129,4 @@ def init_class():
     db.session.add(theclass)
     db.session.commit()
 
-    return jsonify({ 'msg' : '导入成功'}), 201
+    return jsonify({ 'class_id' : theclass.id}), 201
