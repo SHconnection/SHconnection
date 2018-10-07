@@ -45,18 +45,18 @@ def teacher_send_feed():
 
     return jsonify({'created':feed.id}), 201
 
-@api.route('/feeds/<int:pagenum>/')
-#@login_required
-def getfeeds(pagenum):
+@api.route('/feeds/<int:pagenum>/class/<int:class_id>/', methods = ['GET'])
+@login_required
+def getfeeds(pagenum, class_id):
     pageSize = 10
-    rows = Feed.query.count()
+    rows = Feed.query.filter_by(class_id = class_id).count()
     pageMax = rows / pageSize
     if rows % pageSize:
         pageMax += 1
     hasnext = True
     if pagenum > pageMax:
         hasnext = False
-    feeds = db.session.query(Feed).limit(pageSize).offset((pagenum-1)*pageSize).all()
+    feeds = Feed.query.filter_by(class_id = class_id).limit(pageSize).offset((pagenum-1)*pageSize).all()
     feedsret = [feed.feedret() for feed in feeds]
     return jsonify({
         "pagenum": pagenum,
@@ -67,7 +67,7 @@ def getfeeds(pagenum):
 
 
 @api.route('/feed/<int:feedid>/')
-#@login_required
+@login_required
 def get_a_feed(feedid):
     feed = Feed.query.filter_by(id=feedid).first() or None
     if feed:

@@ -50,7 +50,10 @@ def parent_signin():
     if not p.verify_password(password):
         return jsonify({'msg': 'password wrong'}), 400
     token = p.generate_confirmation_token()
-    return jsonify({ 'token' : token }), 200
+    return jsonify({ 
+        'token' : token,
+        'class_id': p.class_id,
+        }), 200
 
 @api.route('/parent/profile/',methods=['POST'])
 @parent_login_required

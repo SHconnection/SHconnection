@@ -192,9 +192,12 @@ class Feed(db.Model):
     
     def picskey(self):
         return "feed" + str(self.id)
+    
 
     def feedret(self):
         teacher = Teacher.query.filter_by(id=self.teacher_id).first()
+        if self.pictures is None:
+            self.pictures = "[]"
         return {
             "id": self.id,
             "class_id": self.class_id,
