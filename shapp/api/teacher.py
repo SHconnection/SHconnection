@@ -78,6 +78,7 @@ def edit_teacher_profile():
     老师修改通讯录资料
     :return:
     """
+
     t = g.current_user
     tel = request.get_json().get('tel')
     name = request.get_json().get('name')
@@ -112,8 +113,15 @@ def get_teacher_profile():
     获得老师通讯录资料
     :return:
     """
-    tid = request.args.get('tid',type=int)
-    t = Teacher.query.filter_by(id=tid).first()
+    token = request.headers['token'].encode('utf-8')
+    s = Serializer(current_app.config['SECRET_KEY'])
+    try:
+     data = s.loads(token)
+     teacherid = data['id']
+    except:
+     return jsonify({"msg": "auth error"}), 401
+
+    t = Teacher.query.filter_by(id=teacherid).first()
     if t is None:
         return jsonify({ 'msg' :'no such teacher'}), 404
 
