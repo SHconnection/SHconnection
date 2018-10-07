@@ -51,6 +51,7 @@ def parent_signin():
         return jsonify({'msg': 'password wrong'}), 400
     token = p.generate_confirmation_token()
     return jsonify({ 
+        'name': p.name,
         'token' : token,
         'class_id': p.class_id,
         }), 200
@@ -95,8 +96,15 @@ def get_parent_profile():
     获得家长通讯录资料
     :return:
     """
-    pid = request.args.get("pid",type=int)
-    p = Parent.query.filter_by(id=pid).first()
+    token = request.headers['token'].encode('utf-8')
+    s = Serializer(current_app.config['SECRET_KEY'])
+    try:
+     data = s.loads(token)
+     parentid = data['id']
+    except:
+     return jsonify({"msg": "auth error"}), 401
+
+    p = Parent.query.filter_by(id=parentid).first()
     if p is None:
         return jsonify({ 'msg' : 'no such parent'}), 404
 
