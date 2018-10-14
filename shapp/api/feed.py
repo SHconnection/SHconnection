@@ -8,7 +8,7 @@ from flask import current_app
 
 
 @api.route('/feed/',methods=['POST'])
-#@teacher_login_required
+@teacher_login_required
 def teacher_send_feed():
     """
     老师发送feed流 　
@@ -25,7 +25,7 @@ def teacher_send_feed():
 
     feed = Feed()
     feed.class_id = request.get_json().get("classId")
-    feed.teacher_id = request.get_json().get("teacherId")
+    feed.teacher_id = teacherid
     feed.thetype = request.get_json().get("type")
     feed.content = request.get_json().get("content")
     feed.pictures = str(request.get_json().get("picture_urls"))
