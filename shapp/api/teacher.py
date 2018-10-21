@@ -34,7 +34,7 @@ def teacher_signup():
     return jsonify({ 'create' : t.id }), 200
 
 
-
+# 废弃
 @api.route('/teacher/login/',methods=['POST'])
 def teacher_login():
     """
@@ -64,7 +64,10 @@ def teacher_login():
         db.session.add(c)
         db.session.commit()
 
-    return jsonify({ 'token' : token }), 200
+    return jsonify({ 
+            'token' : token,
+            'name': t.name,
+        }), 200
 
 
 
@@ -75,6 +78,7 @@ def edit_teacher_profile():
     老师修改通讯录资料
     :return:
     """
+
     t = g.current_user
     tel = request.get_json().get('tel')
     name = request.get_json().get('name')
@@ -109,8 +113,15 @@ def get_teacher_profile():
     获得老师通讯录资料
     :return:
     """
-    tid = request.args.get('tid',type=int)
-    t = Teacher.query.filter_by(id=tid).first()
+    token = request.headers['token'].encode('utf-8')
+    s = Serializer(current_app.config['SECRET_KEY'])
+    try:
+     data = s.loads(token)
+     teacherid = data['id']
+    except:
+     return jsonify({"msg": "auth error"}), 401
+
+    t = Teacher.query.filter_by(id=teacherid).first()
     if t is None:
         return jsonify({ 'msg' :'no such teacher'}), 404
 
@@ -126,6 +137,7 @@ def mainteacher_signup():
     """
     wid = request.get_json().get('wid')
     password = request.get_json().get('password')
+    name = request.get_json().get('name')
 
     if Teacher.query.filter_by(wid=wid).first() is not None:
         return jsonify({ 'msg' : '工号已注册!'}), 401
@@ -134,6 +146,7 @@ def mainteacher_signup():
 
     t = Teacher(
         password = password,
+        name = name,
         ismain = True,
         wid = wid,
     )
@@ -163,6 +176,7 @@ def teacher_signin():
     return jsonify({
         'token' : token,
         'classes_id' : class_id,
+        'name': t.name,
     }), 200
 
 

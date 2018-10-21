@@ -2,6 +2,7 @@ import os
 
 DIALECT = 'mysql'
 DRIVER = 'pymysql'
+
 USERNAME = os.getenv("USERNAME") or "root"
 PASSWORD = os.getenv("PASSWORD") or "muxi304"
 HOST = os.getenv("DBHOST") or "0.0.0.0"

@@ -45,7 +45,8 @@ class Teacher(db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def generate_confirmation_token(self, expiration=604800):
+    # 8 months
+    def generate_confirmation_token(self, expiration=20736000):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'usertype':'teacher', 'id': self.id}).decode('utf-8')
 
@@ -143,7 +144,7 @@ class Parent(db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def generate_confirmation_token(self, expiration=604800):
+    def generate_confirmation_token(self, expiration=20736000):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'usertype':'parent', 'id': self.id}).decode('utf-8')
 
@@ -191,25 +192,28 @@ class Feed(db.Model):
     teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
     thetype = db.Column(db.String(20))
     content = db.Column(db.Text)
-    likes = db.Column(db.Integer)
+    likes = db.Column(db.Integer, default=0)
     # pcomments = db.relationship('PComment',backref='feeds',lazy='dynamic')
     # tcomments = db.relationship('TComment',backref='feeds',lazy='dynamic')
     comments = db.relationship('Comment',backref='feeds',lazy='dynamic')
 
     # 以下使用str() 与 eval(), 不使用redis 
-    pictures = db.Column(db.Text)
-    readed = db.Column(db.Text)
+    pictures = db.Column(db.Text, default="[]")
+    readed = db.Column(db.Text, default="[]")
     readnum = db.Column(db.Integer, default=0)
-    unreaded = db.Column(db.Text)
-    liked = db.Column(db.Text)
+    unreaded = db.Column(db.Text, default="[]")
+    liked = db.Column(db.Text, default="[]")
     
     def picskey(self):
         return "feed" + str(self.id)
+    
 
     def feedret(self):
-        teacher = Teacher.query.filter(id=self.teacher_id).first()
+        teacher = Teacher.query.filter_by(id=self.teacher_id).first()
+        if self.pictures is None:
+            self.pictures = "[]"
         return {
-            "id": id,
+            "id": self.id,
             "class_id": self.class_id,
             "type": self.thetype,
             "content": self.content,
