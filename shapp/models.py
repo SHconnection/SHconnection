@@ -77,6 +77,13 @@ class Teacher(db.Model):
         }
         return info
 
+    def eval_info(self):
+        info = {
+            'tid' : self.id,
+            'name' : self.name,
+        }
+        return info
+
 
 
 class Theclass(db.Model):
@@ -166,6 +173,13 @@ class Parent(db.Model):
             'tel': self.tel,
             'name' : self.name,
             'avatar' : self.avatar,
+        }
+        return info
+
+    def eval_info(self):
+        info = {
+            'tid': self.id,
+            'name': self.name,
         }
         return info
 
@@ -290,6 +304,12 @@ class PEvaluation(db.Model):
         data['scores'] = [ s.to_json() for s in self.scores ]
         return data
 
+    def eval_info_brief(self):
+        info = {
+            'eval': self.content,
+        }
+        return info
+
 #老师评价
 class TEvaluation(db.Model):
     __tablename__ = 'tevaluations'
@@ -307,6 +327,20 @@ class TEvaluation(db.Model):
         data['time'] = self.time
         data['scores'] = [ s.to_json() for s in self.scores ]
         return data
+
+    def eval_info(self):
+        info = {
+            'child' : self.child.name,
+            'eval' : self.content,
+        }
+        return info
+
+    def eval_info_brief(self):
+        info = {
+            'eval': self.content,
+        }
+        return info
+
 
 #家长评分
 class PScore(db.Model):
