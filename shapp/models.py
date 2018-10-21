@@ -335,9 +335,17 @@ class TEvaluation(db.Model):
         }
         return info
 
+    def eval_info2(self):
+        info = {
+            'teacher': self.teacher.name,
+            'eval': self.content,
+        }
+        return info
+
     def eval_info_brief(self):
         info = {
             'eval': self.content,
+           # 'id' : self.id,
         }
         return info
 
