@@ -154,8 +154,8 @@ def get_teacher_teacher():
     老师端点击一个老师看到的是这个老师对班级所有孩子的评价
     :return:
     """
-    cid = request.get_json().get('cid')
-    tid = request.get_json().get('tid')
+    cid = int(request.args.get('cid'))
+    tid = int(request.args.get('tid'))
     teacher = Teacher.query.filter_by(id=tid).first()
     tname = teacher.name
 
@@ -179,11 +179,11 @@ def get_teacher_parent():
     老师端点击一个家长看到的是全部老师对这个家长的孩子的评论
     :return:
     """
-    pid = request.get_json().get('pid')
+    pid = int(request.args.get('pid'))
     p = Parent.query.filter_by(id=pid).first()
     child = p.child
 
-    evals = [ e.eval_info() for e in child.pevaluations ]
+    evals = [ e.eval_info2() for e in child.tevaluations ]
     return jsonify({
         'evals' : evals,
         'child' : child.name,
@@ -199,7 +199,7 @@ def get_parent_teacher():
     """
     p = g.current_user
     child = p.child
-    tid = request.get_json().get('tid')
+    tid = int(request.args.get('tid'))
     evals = [ e.eval_info_brief() for e in child.tevaluations if e.teacher_id == tid ]
     tname = Teacher.query.filter_by(id=tid).first().name
 
