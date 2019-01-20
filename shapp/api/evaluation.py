@@ -126,7 +126,7 @@ def get_parent_view():
 
 
 @api.route('/evaluation/teacher/view/',methods=['GET'])
-@parent_login_required
+@teacher_login_required
 def get_teacher_view():
     """
     查看评价时，老师看到的list
