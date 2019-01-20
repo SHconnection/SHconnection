@@ -3,12 +3,24 @@ import os
 DIALECT = 'mysql'
 DRIVER = 'pymysql'
 
-USERNAME = os.getenv("USERNAME") or "root"
-PASSWORD = os.getenv("PASSWORD") or "muxi304"
+USERNAME = os.getenv("DBUSERNAME") or "root"
+PASSWORD = os.getenv("DBPASSWORD") or "muxi304"
 HOST = os.getenv("DBHOST") or "0.0.0.0"
 PORT = os.getenv("DBPORT") or "3306"
 DATABASE = "shconnection"
 
+
+sqlalchemy_database_uri = \
+    "{}+{}://{}:{}@{}:{}/{}?charset=utf8".format(
+        DIALECT,
+        DRIVER,
+        USERNAME,
+        PASSWORD,
+        HOST,
+        PORT,
+        DATABASE
+    )
+print(sqlalchemy_database_uri)
 
 class Config(object):
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
