@@ -5,7 +5,6 @@ from .. import db
 from .decorators import parent_login_required, login_required, teacher_login_required
 
 
-
 @api.route('/evaluation/teacher/',methods=['POST'])
 @teacher_login_required
 def teacher_send_evaluation():
@@ -13,12 +12,17 @@ def teacher_send_evaluation():
     老师发送评价
     :return:
     """
-    tid = request.args.get('tid')
-    cid = request.args.get('childid')
+    tid = g.current_user.id
+    cid = request.args.get('sid')
 
     json_data = request.get_json()
     comment = json_data['comment']
     score = json_data['score']
+
+    if cid is None or comment is None or score is None:
+        return jsonify({
+            "msg": "need sid comment and score"
+        })
 
     te = TEvaluation()
     te.content = comment
@@ -29,31 +33,19 @@ def teacher_send_evaluation():
 
     for each in score:
         ts = TScore()
-        ts.name = each['name']
+        ts.name = each['key']
         ts.score = each['score']
         ts.evaluation_id = te.id
         db.session.add(ts)
 
     db.session.commit()
 
-    return jsonify({ 'msg' : '评价成功' }), 200
-
-@api.route('/evaluation/teacher/all/',methods=['GET'])
-@login_required
-def get_teacher_evaluation():
-    """
-    获取老师对某一孩子的评价
-    :return:
-    """
-    tid = request.args.get('tid')
-    cid = request.args.get('childid')
-
-    te = TEvaluation.query.filter_by(teacher_id=tid,child_id=cid).all()
+    print("te_teacherid:", te.teacher_id)
+    print("te_child_id:", te.child_id)
 
     return jsonify({
-        'eval' : [ t.to_json() for t in te ]
-    }),200
-
+        'msg': '评价成功'
+    }), 200
 
 
 @api.route('/evaluation/parent/',methods=['POST'])
@@ -91,6 +83,44 @@ def parent_send_evaluation():
     return jsonify({ 'msg' : '评价成功'})
 
 
+@api.route("/evaluation/view/parent/", methods=["GET"])
+@parent_login_required
+def parent_view_evaluation_list():
+    parent = g.current_user
+    childTEvaluations = TEvaluation.query.filter_by(child_id=parent.child_id).all()
+    response_data =  [te.eval_format_data() for te in childTEvaluations]
+    return jsonify(response_data)
+
+
+@api.route("/evaluation/view/teacher/", methods=["GET"])
+@teacher_login_required
+def teacher_view_evaluation_list():
+    teacher = g.current_user
+    AllTeachersTEvaluations = TEvaluation.query.filter_by(teacher_id=teacher.id).all()
+    response_data = [te.eval_format_data() for te in AllTeachersTEvaluations]
+    return jsonify(response_data)
+
+# ##################以下废弃################## #
+
+#废弃
+@api.route('/evaluation/teacher/all/',methods=['GET'])
+@login_required
+def get_teacher_evaluation():
+    """
+    获取老师对某一孩子的评价
+    :return:
+    """
+    tid = request.args.get('tid')
+    cid = request.args.get('childid')
+
+    te = TEvaluation.query.filter_by(teacher_id=tid,child_id=cid).all()
+
+    return jsonify({
+        'eval' : [ t.to_json() for t in te ]
+    }),200
+
+
+#废弃
 @api.route('/evaluation/parent/all/',methods=['GET'])
 @login_required
 def get_parent_evaluation():
@@ -107,7 +137,7 @@ def get_parent_evaluation():
         'eval' : [ p.to_json() for p in pe ]
     }),200
 
-
+#废弃
 @api.route('/evaluation/parent/view/',methods=['GET'])
 @parent_login_required
 def get_parent_view():
@@ -124,7 +154,7 @@ def get_parent_view():
         'teachers' : teachers,
     }), 200
 
-
+#废弃
 @api.route('/evaluation/teacher/view/',methods=['GET'])
 @teacher_login_required
 def get_teacher_view():
@@ -146,7 +176,7 @@ def get_teacher_view():
     }), 200
 
 
-
+#废弃
 @api.route('/evaluation/teacher/teacher/',methods=['GET'])
 @teacher_login_required
 def get_teacher_teacher():
@@ -171,7 +201,7 @@ def get_teacher_teacher():
         'teacher' : tname,
     }), 200
 
-
+#废弃
 @api.route('/evaluation/teacher/parent/',methods=['GET'])
 @teacher_login_required
 def get_teacher_parent():
@@ -189,7 +219,7 @@ def get_teacher_parent():
         'child' : child.name,
     }), 200
 
-
+#废弃
 @api.route('/evaluation/parent/teacher/',methods=['GET'])
 @parent_login_required
 def get_parent_teacher():
@@ -208,7 +238,7 @@ def get_parent_teacher():
         'teacher' : tname,
     }), 200
 
-
+#废弃
 @api.route('/evaluation/parent/parent/',methods=['GET'])
 @parent_login_required
 def get_parent_parent():

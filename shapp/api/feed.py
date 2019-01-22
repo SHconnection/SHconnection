@@ -24,7 +24,7 @@ def teacher_send_feed():
         return jsonify({"msg": "auth error"}), 401
 
     feed = Feed()
-    feed.class_id = request.get_json().get("classId")
+    feed.class_id = request.get_json().get("class_id")
     feed.teacher_id = teacherid
     feed.thetype = request.get_json().get("type")
     feed.content = request.get_json().get("content")
@@ -43,29 +43,40 @@ def teacher_send_feed():
     db.session.add(feed)
     db.session.commit()
 
+    print(feed.time)
     return jsonify({'created':feed.id}), 201
+
 
 @api.route('/feeds/<int:pagenum>/class/<int:class_id>/', methods = ['GET'])
 @login_required
 def getfeeds(pagenum, class_id):
     pageSize = 10
-    rows = Feed.query.filter_by(class_id = class_id).count()
+    rows = Feed.query.filter_by(class_id=class_id).count()
+    print("rows:", rows)
     pageMax = rows / pageSize
     if rows % pageSize:
         pageMax += 1
     hasnext = True
     if pagenum > pageMax:
         hasnext = False
-    feeds = Feed.query.filter_by(class_id = class_id).limit(pageSize).offset((pagenum-1)*pageSize).all()
-    feedsret = [feed.feedret() for feed in feeds]
+    feeds = Feed.query.filter_by(class_id=class_id).limit(pageSize).offset((pagenum-1)*pageSize).all()
+    if g.current_teacher is None:
+        #  parent
+        feeds_return = [feed.feed_return_with_pid(g.current_parent.id, "parent") for feed in feeds]
+    elif g.current_parent is None:
+        #  teacher
+        feeds_return = [feed.feed_return_with_pid(0, "teacher")  for feed in feeds]
+
     return jsonify({
         "pagenum": pagenum,
         "nums": len(feeds),
         "hasnext": hasnext,
-        "feeds": feedsret
+        "feeds": feeds_return
     })
 
 
+#废弃
+'''
 @api.route('/feed/<int:feedid>/')
 @login_required
 def get_a_feed(feedid):
@@ -74,7 +85,7 @@ def get_a_feed(feedid):
         teacher = Teacher.query.filter_by(id = feed.teacher_id).first() or None
         if not teacher:
             return jsonify({"msg": "teacher not found"}), 404
-        
+
         try:
             teacher_simple_info = teacher.brief_info()
             readed = eval(feed.readed)
@@ -117,10 +128,10 @@ def get_a_feed(feedid):
         return jsonify({
                 "msg": "feed not found"
             }), 404
-
+'''
 
 @api.route('/feed/<int:feedid>/read/', methods = ["POST"])
-#@parent_login_required
+@parent_login_required
 def readfeed(feedid):
     token = request.headers['token'].encode('utf-8')
     s = Serializer(current_app.config['SECRET_KEY'])
@@ -149,6 +160,8 @@ def readfeed(feedid):
 
         return jsonify({"msg": "ok"}), 200
 
+#废弃
+'''
 @api.route('/feed/<int:feedid>/like/', methods=["POST"])
 #@login_required
 def likefeed(feedid):
@@ -176,6 +189,8 @@ def likefeed(feedid):
             thefeed.likes += 1
             db.session.commit()
             return jsonify({"msg": "ok"}), 200
+'''
+
 
 @api.route('/feed/<int:feedid>/comment/',methods=["POST"])
 def makecomment(feedid):

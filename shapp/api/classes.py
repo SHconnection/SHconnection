@@ -67,14 +67,15 @@ def get_class_info():
     if c is None:
         return jsonify({'msg' : '班级不存在'}), 404
 
-    teachers = [ t.brief_info() for t in c.teachers ]
+    teachers = [ t.teacher_format_info() for t in c.teachers ]
     parents = []
     for child in c.childs:
-        parents += [ p.brief_info() for p in child.parents ]
+        parents += [ p.parent_format_info() for p in child.parents ]
 
-    return  jsonify({'teacher' : teachers,
-                     'parent': parents
-                     }), 200
+    return jsonify({
+        'teacher': teachers,
+        'parent': parents
+    }), 200
 
 
 @api.route('/init/class/',methods=['POST'])

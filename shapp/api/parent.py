@@ -69,7 +69,7 @@ def edit_parent_profile():
     wechat = request.get_json().get('wechat')
     intro = request.get_json().get('intro')
     avatar = request.get_json().get('avatar')
-    relation = request.get_json().get('relation')
+    #relation = request.get_json().get('relation')
 
     tmp = Parent.query.filter_by(tel=tel).first()
     if tmp is not None and tmp is not p:
@@ -80,12 +80,14 @@ def edit_parent_profile():
     p.wechat = wechat
     p.intro = intro
     p.avatar = avatar
-    p.ralation = relation
+    p.ralation = ""
 
     db.session.add(p)
     db.session.commit()
 
-    return jsonify({ 'msg' : 'edited!'}), 200
+    return jsonify({
+        'msg': 'edited!'
+    }), 200
 
 
 

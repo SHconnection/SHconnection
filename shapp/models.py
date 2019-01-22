@@ -15,10 +15,10 @@ Teacher2Class = db.Table(
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30))
     # 是否为班主任
-    ismain = db.Column(db.Boolean, default = False)
+    ismain = db.Column(db.Boolean, default=False)
     # 任课类型，它是任课类型
     kind = db.Column(db.String(10))
     # 工号
@@ -84,6 +84,21 @@ class Teacher(db.Model):
         }
         return info
 
+    def teacher_format_info(self):
+        if self.ismain:
+            title = "班主任"
+        else:
+            title = "任课老师"
+        info = {
+            "tel": self.tel,
+            "name": self.name,
+            "wechat": self.wechat,
+            "intro": self.intro,
+            "avatar": self.avatar,
+            "subjects": self.kind,
+            "title": title
+        }
+        return info
 
 
 class Theclass(db.Model):
@@ -183,6 +198,17 @@ class Parent(db.Model):
         }
         return info
 
+    def parent_format_info(self):
+        info = {
+            "tel": self.tel,
+            "name": self.name,
+            "wechat": self.wechat,
+            "intro": self.intro,
+            "avatar": self.avatar,
+            "subjects": "",
+            "title": ""
+        }
+        return info
 
 class Feed(db.Model):
     __tablename__ = 'feeds'
@@ -193,8 +219,6 @@ class Feed(db.Model):
     thetype = db.Column(db.String(20))
     content = db.Column(db.Text)
     likes = db.Column(db.Integer, default=0)
-    # pcomments = db.relationship('PComment',backref='feeds',lazy='dynamic')
-    # tcomments = db.relationship('TComment',backref='feeds',lazy='dynamic')
     comments = db.relationship('Comment',backref='feeds',lazy='dynamic')
 
     # 以下使用str() 与 eval(), 不使用redis 
@@ -206,21 +230,43 @@ class Feed(db.Model):
     
     def picskey(self):
         return "feed" + str(self.id)
-    
 
-    def feedret(self):
+    def getyyyymmddhhmm(self):
+        import re
+        return re.sub('\D', '', self.time.__str__()[:-2])
+
+    def feed_return_with_pid(self, uid, utype):
         teacher = Teacher.query.filter_by(id=self.teacher_id).first()
         if self.pictures is None:
             self.pictures = "[]"
+
+        readednum = len(eval(self.readed))
+        unreadednum = len(eval(self.unreaded))
+        read_status = str(readednum) + "/" + str(readednum + unreadednum)
+
+        readed_bool = None
+        if utype == "teacher":
+            readed_bool = False
+        elif utype == "parent":
+            readed_bool = False
+            user = Parent.query.filter_by(id=uid).first() or None
+            if user is not None:
+                if user.id in eval(self.readed):
+                    readed_bool = True
+
+        feed_comments = Comment.query.filter_by(feed_id=self.id).all()
+
         return {
             "id": self.id,
-            "class_id": self.class_id,
+            "time": self.getyyyymmddhhmm(),
             "type": self.thetype,
             "content": self.content,
-            "likes": self.likes,
-            "liked": False,
+            "readed": readed_bool,
+            "read_status": read_status,
             "picture_urls": eval(self.pictures),
-            "teacherSimpleInfo": teacher.brief_info()
+            "teacherSimpleInfo": teacher.brief_info(),
+            "commentnum": len(feed_comments),
+            "comments": [c.comment_info_for_feed_return() for c in self.comments]
         }
 
 
@@ -233,6 +279,7 @@ class Comment(db.Model):
     likes = db.Column(db.Integer, default=0)
     feed_id = db.Column(db.Integer, db.ForeignKey("feeds.id"))
     uid = db.Column(db.Integer)
+
 
     @staticmethod
     def makecomment(utype, uid, feed_id, content):
@@ -286,6 +333,23 @@ class Comment(db.Model):
                     "user_simple_info": user
                 }
 
+    def comment_info_for_feed_return(self):
+        user = Parent()
+        if self.ctype == "teacher":
+            user = Teacher.query.filter_by(id=self.uid).first() or None
+        elif self.ctype == "parent":
+            user = Parent.query.filter_by(id=self.uid).first() or None
+        if user is None:
+            return {
+                "content": self.content,
+                "username": self.ctype + str(self.uid)
+            }
+
+        return  {
+            "content": self.content,
+            "username": user.name
+        }
+
 # 家长评价
 class PEvaluation(db.Model):
     __tablename__ = 'pevaluations'
@@ -310,6 +374,20 @@ class PEvaluation(db.Model):
         }
         return info
 
+    def getyyyymmddhhmm(self):
+        import re
+        return re.sub('\D', '', self.time.__str__()[:-2])
+
+    def eval_format_data(self):
+
+        info = {
+            "time": self.getyyyymmddhhmm(),
+            "name": Parent.query.filter_by(id=self.parent_id).first().name,
+            "detail": self.content,
+            "scores": [s.to_json() for s in self.scores]
+        }
+        return info
+
 #老师评价
 class TEvaluation(db.Model):
     __tablename__ = 'tevaluations'
@@ -325,7 +403,7 @@ class TEvaluation(db.Model):
         data = {}
         data['content'] = self.content
         data['time'] = self.time
-        data['scores'] = [ s.to_json() for s in self.scores ]
+        data['scores'] = [s.to_json() for s in self.scores]
         return data
 
     def eval_info(self):
@@ -349,6 +427,20 @@ class TEvaluation(db.Model):
         }
         return info
 
+    def getyyyymmddhhmm(self):
+        import re
+        return re.sub('\D', '', self.time.__str__()[:-2])
+
+    def eval_format_data(self):
+
+        info = {
+            "time": self.getyyyymmddhhmm(),
+            "name": Teacher.query.filter_by(id=self.teacher_id).first().name,
+            "detail": self.content,
+            "scores": [s.to_json() for s in self.scores]
+        }
+        return info
+
 
 #家长评分
 class PScore(db.Model):
@@ -360,7 +452,7 @@ class PScore(db.Model):
 
     def to_json(self):
         data = {}
-        data['name'] = self.name
+        data['key'] = self.name
         data['score'] = self.score
         return data
 
@@ -374,7 +466,6 @@ class TScore(db.Model):
 
     def to_json(self):
         data = {}
-        data['name'] = self.name
+        data['key'] = self.name
         data['score'] = self.score
         return data
-

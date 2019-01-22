@@ -7,8 +7,13 @@ USERNAME = os.getenv("DBUSERNAME") or "root"
 PASSWORD = os.getenv("DBPASSWORD") or "muxi304"
 HOST = os.getenv("DBHOST") or "0.0.0.0"
 PORT = os.getenv("DBPORT") or "3306"
-DATABASE = "shconnection"
 
+
+USERNAME = "muxi"
+PASSWORD = "Muxistudio304"
+HOST = 'rm-wz907gsr637s950hmjo.mysql.rds.aliyuncs.com'
+PORT = "3306"
+DATABASE = "shconnection2"
 
 sqlalchemy_database_uri = \
     "{}+{}://{}:{}@{}:{}/{}?charset=utf8".format(
