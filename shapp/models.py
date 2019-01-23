@@ -23,7 +23,7 @@ class Teacher(db.Model):
     kind = db.Column(db.String(10))
     # 工号
     wid = db.Column(db.String(20))
-    avatar = db.Column(db.String(100))
+    avatar = db.Column(db.String(100), default="https://muxixyz-1258093397.cos-website.ap-chengdu.myqcloud.com/20180508023726790.png")
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
     intro = db.Column(db.Text)
@@ -136,7 +136,7 @@ class Parent(db.Model):
     # 孩子的学号
     sid = db.Column(db.String(20))
     name = db.Column(db.String(30))
-    avatar = db.Column(db.String(100))
+    avatar = db.Column(db.String(100), default="https://muxixyz-1258093397.cos-website.ap-chengdu.myqcloud.com/20180508023726790.png")
     tel = db.Column(db.String(20))
     wechat = db.Column(db.String(20))
     intro = db.Column(db.Text)
