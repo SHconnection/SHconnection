@@ -60,6 +60,10 @@ def getfeeds(pagenum, class_id):
     if pagenum > pageMax:
         hasnext = False
     feeds = Feed.query.filter_by(class_id=class_id).limit(pageSize).offset((pagenum-1)*pageSize).all()
+
+
+
+
     if g.current_teacher is None:
         #  parent
         feeds_return = [feed.feed_return_with_pid(g.current_parent.id, "parent") for feed in feeds]

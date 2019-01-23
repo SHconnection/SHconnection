@@ -57,6 +57,8 @@ class Teacher(db.Model):
             data = s.loads(token.encode('utf-8'))
         except:
             return None
+        if data.get('usertype') != "teacher":
+            return None
         return Teacher.query.get(data['id'])
 
     def json_info(self):
@@ -169,6 +171,8 @@ class Parent(db.Model):
         try:
             data = s.loads(token.encode('utf-8'))
         except:
+            return None
+        if data.get('usertype') != "parent":
             return None
         return Parent.query.get(data['id'])
 
