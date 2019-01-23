@@ -1,6 +1,6 @@
 from flask import jsonify, request, g
 from . import api
-from ..models import Teacher, Parent, Feed, Comment
+from ..models import Teacher, Parent, Feed, Comment, Teacher2Class
 from .. import db
 from .decorators import parent_login_required, login_required, teacher_login_required
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
@@ -22,6 +22,9 @@ def teacher_send_feed():
         teacherid = data['id']
     except:
         return jsonify({"msg": "auth error"}), 401
+
+    # t2c = Teacher2Class.query.filter_by(teacher_id = teacherid).first()
+
 
     feed = Feed()
     feed.class_id = request.get_json().get("class_id")
@@ -60,10 +63,8 @@ def getfeeds(pagenum, class_id):
     if pagenum > pageMax:
         hasnext = False
     feeds = Feed.query.filter_by(class_id=class_id).limit(pageSize).offset((pagenum-1)*pageSize).all()
-
-
-
-
+    print("feeds:", str(feeds))
+    feeds_return = []
     if g.current_teacher is None:
         #  parent
         feeds_return = [feed.feed_return_with_pid(g.current_parent.id, "parent") for feed in feeds]
@@ -208,7 +209,7 @@ def makecomment(feedid):
     except:
         return jsonify({"msg": "auth error"}), 401
 
-    feedid = request.get_json().get("feedId")
+    feedid = feedid
     content = request.get_json().get("content")
 
     try:
@@ -217,7 +218,7 @@ def makecomment(feedid):
         return jsonify({"msg": "info error"}), 400
     db.session.add(c)
     db.session.commit()
-    return jsonify({"msg": utype + " comment for feed " + str(feedid) + "posted."}), 201
+    return jsonify({"msg": utype + " comment for feed " + str(feedid) + " posted."}), 201
 
 
 @api.route('/feed/<int:feedid>/comments/', methods=["GET"])
