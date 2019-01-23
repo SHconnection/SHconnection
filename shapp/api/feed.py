@@ -65,7 +65,7 @@ def getfeeds(pagenum, class_id):
         feeds_return = [feed.feed_return_with_pid(g.current_parent.id, "parent") for feed in feeds]
     elif g.current_parent is None:
         #  teacher
-        feeds_return = [feed.feed_return_with_pid(0, "teacher")  for feed in feeds]
+        feeds_return = [feed.feed_return_with_pid(0, "teacher") for feed in feeds]
 
     return jsonify({
         "pagenum": pagenum,
