@@ -365,6 +365,16 @@ class PEvaluation(db.Model):
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
     scores = db.relationship('PScore',backref='pevaluation',lazy='dynamic')
 
+    def __cmp__(self, other):
+        my = self.getyyyymmddhhmm()
+        other = other.getyyyymmddhhmm()
+        if my > other:
+            return 1
+        elif my == other:
+            return 0
+        else:
+            return -1
+
     def to_json(self):
         data = {}
         data['content'] = self.content
@@ -402,6 +412,16 @@ class TEvaluation(db.Model):
     teacher_id = db.Column(db.Integer,db.ForeignKey('teachers.id'))
     child_id = db.Column(db.Integer,db.ForeignKey('childs.id'))
     scores = db.relationship('TScore',backref='tevaluation',lazy='dynamic')
+
+    def __cmp__(self, other):
+        my = self.getyyyymmddhhmm()
+        other = other.getyyyymmddhhmm()
+        if my > other:
+            return 1
+        elif my == other:
+            return 0
+        else:
+            return -1
 
     def to_json(self):
         data = {}

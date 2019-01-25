@@ -3,7 +3,7 @@ from . import api
 from ..models import Parent, Child, Theclass
 from .. import db
 from .decorators import parent_login_required, login_required
-
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 @api.route('/parent/addclass/<int:classid>/', methods=['POST'])
 def parentinit(classid):
