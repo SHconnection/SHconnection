@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block charts %}
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/v-charts/lib/line.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/v-charts/lib/radar.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/v-charts/lib/style.min.css">
+{% endblock %}
+{% block script %}
+
+	<script src="http://static.muxixyz.com/shconnection/js/list.1.0.0.js"></script>
+
+{% endblock %}
+{% block content %}
+<div id="list"></div>
+{% endblock %}
