@@ -4,7 +4,7 @@ from ..models import Teacher, Parent, TEvaluation, PEvaluation, TScore, PScore, 
 from ..kmeans import Kmeans
 from .. import db
 from .decorators import parent_login_required, login_required, teacher_login_required
-
+import random
 from operator import itemgetter
 
 import pprint
@@ -125,9 +125,17 @@ def chart_test():
 
 
 def kmeans_helper(arr):
+    names = ["赵泽林","钱阳","孙妍菲","李怡萱","周新文","吴家豪","郑雅忆","冯子恒","陈鸿宇", "韩依霖", "杨雅雯", "朱泽轩", "秦硕", "姜文浩", "孟子文", "邱思雨", "马浩杰", "余淑静", "张圣泽", "许亨哈", "陈宇倩", "陈宇晟", "张全婵", "王丙文", "崔正豪", "袁逸欣", "夏宇宸", "魏斓", "尚海伦", "王韬翔", "谷兆宇", "宋寅明", "陈雅琴", "殷一楠", "王振宇", "陈真颖", "刘鹤尧", "赵海洲", "郝恩奇"]
+    
     cms = ['日期']
+    nas = []
     for i in range(len(arr)):
-        cms.append("孩子" + str(i+1))
+        while True:
+            key = names[random.randint(0, len(names)-1)]
+            if key not in cms:
+                cms.append(key)
+                nas.append(key)
+                break
 
     data = {
         "data": {
@@ -135,22 +143,20 @@ def kmeans_helper(arr):
             "rows": []
         }        
     }
+
     for di in range(len(arr[0])):
         d = {
             '日期': di+1,
         }
         for ci in range(len(arr)):
-            key = '孩子' + str(ci+1)
+            key = nas[ci]
             value = arr[ci][di]
             d.update({
                 key : value
             })
 
         data["data"]["rows"].append(d)
-
     return data
-
-
 
 @api.route("/chart/kmeans/", methods = ["GET"])
 def getkmeans():
@@ -162,7 +168,16 @@ def getkmeans():
     kmeans.compare_to_k()
     kmeans.get_k_avarage()
     cl = kmeans.compare_to_k2()
-    
+  
+    while True:
+        if len(cl[0]) < 4 or len(cl[1]) < 4 or len(cl[2]) < 4:
+            kmeans = Kmeans(data, 3)
+            kmeans.get_k_rand()
+            kmeans.compare_to_k()
+            kmeans.get_k_avarage()
+            cl = kmeans.compare_to_k2()
+        else:
+            break;
     data1 = kmeans_helper(cl[0])
     data2 = kmeans_helper(cl[1])
     data3 = kmeans_helper(cl[2])
