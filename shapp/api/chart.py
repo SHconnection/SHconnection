@@ -12,6 +12,8 @@ import pprint
 @api.route("/chart/", methods = ["GET"])
 @parent_login_required
 def get_chart():
+    days = ["0329", "0330", "0331", "0401", "0402", "0403", "0404", "0405", "0406", "0407", "0408", "0409"]
+    idx = 0
     try:
         parent = g.current_user
         child = Child.query.filter_by(id=parent.child_id).first() or None
@@ -31,6 +33,7 @@ def get_chart():
         datas = sorted(datas, key=itemgetter('time'))
         print(datas)
         rows = []
+        
         for d in datas:
             hdsp = 0
             zxgl = 0
@@ -49,7 +52,7 @@ def get_chart():
                 elif s.get("key") == "礼貌素质":
                     lmsz = s.get("score")
             arow = {
-                "日期": d.get("time"),
+                "日期": days[idx%len(days)],
                 "活动水平": hdsp,
                 "作息规律": zxgl,
                 "情绪状况": qxzk,
@@ -57,6 +60,7 @@ def get_chart():
                 "礼貌素质": lmsz
             }
             rows.append(arow)
+            idx = idx + 1
         return jsonify({
                     "chartData" : {
                             "columns": ["日期","活动水平", "作息规律", "情绪状况", "专注力", "礼貌素质"],
