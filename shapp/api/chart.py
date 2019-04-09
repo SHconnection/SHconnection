@@ -57,7 +57,12 @@ def get_chart():
                 "礼貌素质": lmsz
             }
             rows.append(arow)
-        return jsonify(rows)
+        return jsonify({
+                    "chartData" : {
+                            "columns": ["日期","活动水平", "作息规律", "情绪状况", "专注力", "礼貌素质"],
+                            "rows": rows
+                            }
+                })
     except Exception as e:
         print(e)
         return chart_test()
